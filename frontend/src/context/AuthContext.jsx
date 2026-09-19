@@ -66,30 +66,21 @@ export function AuthProvider({ children }) {
     setRole('student');
   };
 
-  // Preview role switching (from prototype sidebar)
-  const switchPreviewRole = async (newRole) => {
+  // View mode switching: regular users can toggle between 'student' and 'senior' view.
+  // Only admin@celestia-trichy.me can access 'admin'.
+  const switchPreviewRole = (newRole) => {
     const roleLower = newRole.toLowerCase();
-    setRole(roleLower);
-
-    const demoAccounts = {
-      student: { email: 'ak@vitstudent.ac.in', password: 'password' },
-      senior: { email: 'priya@vitstudent.ac.in', password: 'password' },
-      admin: { email: 'admin@vitstudent.ac.in', password: 'password' },
-    };
-
-    const targetAccount = demoAccounts[roleLower];
-    if (targetAccount) {
-      try {
-        const res = await authApi.login(targetAccount);
-        if (res.data.success) {
-          const { user: loggedInUser, token: authToken } = res.data;
-          localStorage.setItem('token', authToken);
-          setToken(authToken);
-          setUser(loggedInUser);
-        }
-      } catch (err) {
-        console.warn('Silent role switch login fallback:', err.message);
+    if (roleLower === 'admin') {
+      if (user?.email === 'admin@celestia-trichy.me') {
+        setRole('admin');
+      } else {
+        console.warn('Admin privileges restricted to admin@celestia-trichy.me');
       }
+      return;
+    }
+
+    if (roleLower === 'student' || roleLower === 'senior') {
+      setRole(roleLower);
     }
   };
 

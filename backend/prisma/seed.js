@@ -574,6 +574,120 @@ async function main() {
   // 11. Synchronize generational lineage for roll 9
   await syncGenerationalLineage(9, 'MCA', 'Computer Applications', 'VIT Vellore');
 
+  // 12. Part 15 Testing Accounts (Development / Testing Only)
+  console.log('🌱 Seeding Part 15 Testing Accounts (@celestia-trichy.me)...');
+  const testPassword = process.env.TEST_PASSWORD || 'Temp@1234';
+  const testPasswordHash = await bcrypt.hash(testPassword, 10);
+
+  // 12a. Admin account: admin@celestia-trichy.me
+  await prisma.user.upsert({
+    where: { email: 'admin@celestia-trichy.me' },
+    update: { passwordHash: testPasswordHash, role: 'ADMIN' },
+    create: {
+      name: 'Celestia Admin',
+      email: 'admin@celestia-trichy.me',
+      passwordHash: testPasswordHash,
+      role: 'ADMIN',
+      college: 'Test',
+      program: 'Administration',
+      branch: 'Administration',
+      status: 'ACTIVE',
+    },
+  });
+
+  // 12b. Alumni: 24mca0010@celestia-trichy.me (Batch 2024, Roll 10)
+  const user24 = await prisma.user.upsert({
+    where: { email: '24mca0010@celestia-trichy.me' },
+    update: { passwordHash: testPasswordHash, role: 'ALUMNI' },
+    create: {
+      name: 'Test Senior 24',
+      email: '24mca0010@celestia-trichy.me',
+      passwordHash: testPasswordHash,
+      role: 'ALUMNI',
+      college: 'Test',
+      program: 'MCA',
+      branch: 'Computer Applications',
+      batchYear: 2024,
+      rollNumber: 10,
+      headline: 'MCA Alumnus · Batch 2024',
+      status: 'ACTIVE',
+    },
+  });
+
+  // 12c. Senior: 25mca0010@celestia-trichy.me (Batch 2025, Roll 10)
+  const user25 = await prisma.user.upsert({
+    where: { email: '25mca0010@celestia-trichy.me' },
+    update: { passwordHash: testPasswordHash, role: 'SENIOR' },
+    create: {
+      name: 'Test Senior 25',
+      email: '25mca0010@celestia-trichy.me',
+      passwordHash: testPasswordHash,
+      role: 'SENIOR',
+      college: 'Test',
+      program: 'MCA',
+      branch: 'Computer Applications',
+      batchYear: 2025,
+      rollNumber: 10,
+      headline: 'MCA Senior · Batch 2025 · Corres',
+      status: 'ACTIVE',
+      isTopPerformer: true,
+    },
+  });
+
+  // 12d. Student: 26mca0010@celestia-trichy.me (Batch 2026, Roll 10)
+  const user26 = await prisma.user.upsert({
+    where: { email: '26mca0010@celestia-trichy.me' },
+    update: { passwordHash: testPasswordHash, role: 'STUDENT' },
+    create: {
+      name: 'Test Student 26',
+      email: '26mca0010@celestia-trichy.me',
+      passwordHash: testPasswordHash,
+      role: 'STUDENT',
+      college: 'Test',
+      program: 'MCA',
+      branch: 'Computer Applications',
+      batchYear: 2026,
+      rollNumber: 10,
+      headline: 'MCA Student · Batch 2026',
+      status: 'ACTIVE',
+    },
+  });
+
+  // Corres assignment between 26mca0010 and 25mca0010 (Same roll match)
+  await prisma.corresAssignment.upsert({
+    where: { id: 'test-assign-26-25-roll10' },
+    update: {},
+    create: {
+      id: 'test-assign-26-25-roll10',
+      juniorId: user26.id,
+      seniorId: user25.id,
+      juniorBatchYear: 2026,
+      seniorBatchYear: 2025,
+      type: 'SAME_ROLL',
+      reason: 'Same roll number found in batch 2025',
+      status: 'ACTIVE',
+    },
+  });
+
+  // Initialize streaks for test users
+  for (const u of [user24, user25, user26]) {
+    await prisma.streak.upsert({
+      where: { userId: u.id },
+      update: {},
+      create: {
+        userId: u.id,
+        currentStreak: u.id === user25.id ? 7 : 0,
+        longestStreak: u.id === user25.id ? 14 : 0,
+        lastContributionDate: new Date(),
+        thisMonthCount: u.id === user25.id ? 5 : 0,
+      },
+    });
+  }
+
+  // Synchronize lineage for Roll 10
+  await syncGenerationalLineage(10, 'MCA', 'Computer Applications', 'Test');
+  console.log('✅ Part 15 Testing Accounts seeded');
+
   console.log('🎉 Database seed completed successfully!');
 }
 

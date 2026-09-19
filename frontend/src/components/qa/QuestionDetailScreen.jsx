@@ -1,19 +1,25 @@
 import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import Icon from '../common/Icon';
 import { Badge, Avatar } from '../common/CommonUI';
 import { qaApi } from '../../services/api';
 
 export function QuestionDetailScreen({ question, nav, user }) {
-  const [qData, setQData] = useState(null);
+  const params = useParams();
+  const navigate = useNavigate();
+  const targetId = question?.id || params?.id;
+
+  const [qData, setQData] = useState(question || null);
   const [draft, setDraft] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!question && Boolean(targetId));
   const [submitting, setSubmitting] = useState(false);
 
   const fetchQuestionDetails = async () => {
-    if (!question?.id) return;
+    if (!targetId) return;
     try {
-      const res = await qaApi.getQuestion(question.id);
-      if (res.data.success) {
+      setLoading(true);
+      const res = await qaApi.getQuestion(targetId);
+      if (res.data?.success && res.data?.question) {
         setQData(res.data.question);
       }
     } catch (err) {
@@ -24,14 +30,26 @@ export function QuestionDetailScreen({ question, nav, user }) {
   };
 
   useEffect(() => {
-    fetchQuestionDetails();
-  }, [question?.id]);
+    if (targetId && (!qData || qData.id !== targetId)) {
+      fetchQuestionDetails();
+    }
+  }, [targetId]);
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else if (nav) {
+      nav('qa');
+    } else {
+      navigate('/qa');
+    }
+  };
 
   const q = qData || question || {};
 
   const handlePostAnswer = async (e) => {
     e.preventDefault();
-    if (!draft.trim()) return;
+    if (!draft.trim() || !q.id) return;
 
     setSubmitting(true);
     try {
@@ -54,15 +72,37 @@ export function QuestionDetailScreen({ question, nav, user }) {
     }
   };
 
+  if (loading) {
+    return (
+      <div>
+        <button className="back-nav-btn" onClick={handleBack}>
+          ← Back
+        </button>
+        <div className="card" style={{ padding: 24, textAlign: 'center' }}>
+          Loading question details...
+        </div>
+      </div>
+    );
+  }
+
+  if (!q.id && !loading) {
+    return (
+      <div>
+        <button className="back-nav-btn" onClick={handleBack}>
+          ← Back to Q&A
+        </button>
+        <div className="card" style={{ padding: 24, textAlign: 'center' }}>
+          Question not found.
+        </div>
+      </div>
+    );
+  }
+
   const isQuestionAsker = q.askerId === user?.id || q.asker === 'You' || q.asker === user?.name;
 
   return (
     <div>
-      <button
-        className="btn btn-ghost btn-sm"
-        style={{ marginBottom: 16 }}
-        onClick={() => nav('qa')}
-      >
+      <button className="back-nav-btn" onClick={handleBack}>
         ← Back to Q&A
       </button>
 
@@ -70,7 +110,7 @@ export function QuestionDetailScreen({ question, nav, user }) {
         <Badge tone="slate">{q.subject || 'General'}</Badge>
         <h2 style={{ fontSize: 21, marginTop: 10 }}>{q.title}</h2>
         <div className="subhead" style={{ marginTop: 6 }}>
-          Asked by {q.asker} · {q.time || 'Recently'}
+          Asked by {q.asker || 'Student'} · {q.time || 'Recently'}
         </div>
         {q.description && (
           <p style={{ marginTop: 14, fontSize: 14.5, lineHeight: 1.7, color: 'var(--text-900)' }}>
@@ -162,4 +202,3 @@ export function QuestionDetailScreen({ question, nav, user }) {
 }
 
 export default QuestionDetailScreen;
-

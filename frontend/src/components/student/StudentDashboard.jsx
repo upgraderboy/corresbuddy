@@ -43,6 +43,12 @@ export function StudentDashboard({ nav, user }) {
   const questions = data?.recentQuestions || [];
   const notifications = data?.notifications || [];
 
+  const streak = data?.streak || {
+    current: user?.streak?.currentStreak ?? user?.streakCount ?? 0,
+    longest: user?.streak?.longestStreak ?? user?.longestStreak ?? 0,
+    thisMonth: user?.streak?.thisMonthCount ?? 0,
+  };
+
   return (
     <div>
       <PageHead
@@ -50,6 +56,22 @@ export function StudentDashboard({ nav, user }) {
         title="Dashboard"
         subhead="Everything preserved for you by the generations before you, in one place."
       />
+
+      {streak.current > 0 && (
+        <div className="streak-band" style={{ marginBottom: 20 }}>
+          <div className="streak-flame">
+            <Icon name="flame" style={{ width: 24, height: 24 }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontFamily: 'var(--font-d)', fontWeight: 600 }}>
+              {streak.current} day contribution streak
+            </div>
+            <div style={{ fontSize: 13, color: '#C7D2E0' }}>
+              Longest streak: {streak.longest} days · {streak.thisMonth} contributions this month
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-2" style={{ marginBottom: 20, alignItems: 'stretch' }}>
         {/* Assigned Corres Card */}

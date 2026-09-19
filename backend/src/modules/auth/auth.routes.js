@@ -4,10 +4,11 @@ import { authenticate } from '../../middleware/auth.js';
 
 const router = express.Router();
 
+router.post('/send-otp', authController.sendOtp);
+router.post('/verify-otp', authController.verifyOtp);
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/me', authenticate, authController.getMe);
 router.post('/logout', authenticate, authController.logout);
 
 export default router;
-

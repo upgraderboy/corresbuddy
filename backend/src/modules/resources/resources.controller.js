@@ -1,3 +1,6 @@
+import path from 'path';
+import fs from 'fs';
+import prisma from '../../config/db.js';
 import * as resourcesService from './resources.service.js';
 
 export const listResources = async (req, res, next) => {
@@ -59,8 +62,51 @@ export const deleteResource = async (req, res, next) => {
 
 export const getDownload = async (req, res, next) => {
   try {
+    const resource = await prisma.resource.findUnique({ where: { id: req.params.id } });
+    if (!resource) return res.status(404).json({ success: false, message: 'Resource not found' });
+
+    const cleanFilename = (resource.title || 'resource')
+      .replace(/[^a-zA-Z0-9_\-\.]/g, '_') + '.' + (resource.fileType || 'pdf');
+
     const url = await resourcesService.getResourceDownloadUrl(req.params.id);
-    res.json({ success: true, downloadUrl: url });
+    res.json({ success: true, downloadUrl: url, filename: cleanFilename });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const downloadFile = async (req, res, next) => {
+  try {
+    const resource = await prisma.resource.findUnique({ where: { id: req.params.id } });
+    if (!resource) return res.status(404).json({ success: false, message: 'Resource not found' });
+
+    // Increment downloads count
+    await prisma.resource.update({
+      where: { id: req.params.id },
+      data: { downloadsCount: { increment: 1 } },
+    });
+
+    const cleanFilename = (resource.title || 'resource')
+      .replace(/[^a-zA-Z0-9_\-\.]/g, '_') + '.' + (resource.fileType || 'pdf');
+
+    // Check if local file exists
+    if (resource.fileUrl && resource.fileUrl.startsWith('/uploads/')) {
+      const localPath = path.join(process.cwd(), resource.fileUrl);
+      if (fs.existsSync(localPath)) {
+        res.setHeader('Content-Disposition', `attachment; filename="${cleanFilename}"`);
+        return res.sendFile(localPath);
+      }
+    }
+
+    // Otherwise redirect or return download URL
+    const url = await resourcesService.getResourceDownloadUrl(req.params.id);
+    if (url.startsWith('http')) {
+      res.setHeader('Content-Disposition', `attachment; filename="${cleanFilename}"`);
+      return res.redirect(url);
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${cleanFilename}"`);
+    res.json({ success: true, downloadUrl: url, filename: cleanFilename });
   } catch (error) {
     next(error);
   }

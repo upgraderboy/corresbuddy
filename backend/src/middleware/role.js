@@ -10,6 +10,16 @@ export const authorizeRoles = (...allowedRoles) => {
     const userRole = (req.user.role || '').toUpperCase();
     const allowed = allowedRoles.map((r) => r.toUpperCase());
 
+    // Strict Admin check: Only admin@celestia-trichy.me has admin privileges
+    if (allowed.includes('ADMIN')) {
+      if (req.user.email !== 'admin@celestia-trichy.me' || userRole !== 'ADMIN') {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden. Only the system administrator (admin@celestia-trichy.me) can access this resource.',
+        });
+      }
+    }
+
     if (!allowed.includes(userRole)) {
       return res.status(403).json({
         success: false,
@@ -22,4 +32,3 @@ export const authorizeRoles = (...allowedRoles) => {
 };
 
 export default authorizeRoles;
-

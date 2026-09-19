@@ -74,6 +74,14 @@ export function UploadResourceScreen({ nav, role, screenData }) {
 
   return (
     <div>
+      <button
+        type="button"
+        className="back-nav-btn"
+        onClick={() => (nav ? nav('resources') : window.history.back())}
+      >
+        ← Back to resources
+      </button>
+
       <PageHead
         title="Upload Resource"
         subhead="Share something the next batch will thank you for."

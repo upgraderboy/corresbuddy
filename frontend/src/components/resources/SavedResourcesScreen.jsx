@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Icon from '../common/Icon';
 import { PageHead, Empty, ResIcon } from '../common/CommonUI';
 import { resourcesApi } from '../../services/api';
+import { downloadResourceFile } from '../../utils/download.util';
 
 export function SavedResourcesScreen({ saved, nav, toggleSave }) {
   const [savedResources, setSavedResources] = useState([]);
@@ -23,15 +24,9 @@ export function SavedResourcesScreen({ saved, nav, toggleSave }) {
     fetchSaved();
   }, [saved]);
 
-  const handleDownload = async (id) => {
-    try {
-      const res = await resourcesApi.getDownload(id);
-      if (res.data.success && res.data.downloadUrl) {
-        window.open(res.data.downloadUrl, '_blank');
-      }
-    } catch (err) {
-      alert('Could not download file: ' + err.message);
-    }
+  const handleDownload = async (id, title) => {
+    const fileName = title ? `${title.replace(/[^a-z0-9_-]/gi, '_')}.pdf` : 'resource.pdf';
+    await downloadResourceFile(id, fileName);
   };
 
   return (
@@ -84,7 +79,7 @@ export function SavedResourcesScreen({ saved, nav, toggleSave }) {
                 </button>
                 <button
                   className="btn btn-primary btn-sm"
-                  onClick={() => handleDownload(r.id)}
+                  onClick={() => handleDownload(r.id, r.title)}
                 >
                   <Icon name="download" />
                   Download

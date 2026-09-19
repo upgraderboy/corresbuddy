@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Icon from '../common/Icon';
 import { PageHead, Empty, ResIcon } from '../common/CommonUI';
 import { resourcesApi } from '../../services/api';
+import { downloadResourceFile } from '../../utils/download.util';
 
 const CATEGORIES = [
   'Study Material',
@@ -50,14 +51,8 @@ export function ResourceDirectory({ nav, saved, toggleSave }) {
   };
 
   const handleDownload = async (id, title) => {
-    try {
-      const res = await resourcesApi.getDownload(id);
-      if (res.data.success && res.data.downloadUrl) {
-        window.open(res.data.downloadUrl, '_blank');
-      }
-    } catch (err) {
-      alert('Could not download resource: ' + err.message);
-    }
+    const fileName = title ? `${title.replace(/[^a-z0-9_-]/gi, '_')}.pdf` : 'resource.pdf';
+    await downloadResourceFile(id, fileName);
   };
 
   return (

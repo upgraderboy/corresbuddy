@@ -24,9 +24,9 @@ export function SeniorDashboard({ nav, user }) {
   }, []);
 
   const streak = data?.streak || {
-    current: 7,
-    longest: 14,
-    thisMonth: 5,
+    current: user?.streak?.currentStreak ?? user?.streakCount ?? 0,
+    longest: user?.streak?.longestStreak ?? user?.longestStreak ?? 0,
+    thisMonth: user?.streak?.thisMonthCount ?? 0,
   };
 
   const juniors = data?.juniors || [

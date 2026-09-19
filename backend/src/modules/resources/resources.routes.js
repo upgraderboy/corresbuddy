@@ -13,6 +13,7 @@ router.post('/:id/upload', authenticate, upload.single('file'), resourcesControl
 router.patch('/:id', authenticate, resourcesController.updateResource);
 router.delete('/:id', authenticate, resourcesController.deleteResource);
 router.get('/:id/download', authenticate, resourcesController.getDownload);
+router.get('/:id/file', authenticate, resourcesController.downloadFile);
 router.post('/:id/download', authenticate, resourcesController.getDownload);
 router.post('/:id/save', authenticate, resourcesController.saveResource);
 router.delete('/:id/save', authenticate, resourcesController.unsaveResource);

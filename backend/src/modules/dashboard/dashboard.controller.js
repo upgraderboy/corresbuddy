@@ -59,8 +59,37 @@ export const getStudentDashboard = async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     });
 
+    // 6. Streak for student
+    let streak = await prisma.streak.findUnique({ where: { userId: user.id } });
+    if (!streak) {
+      streak = await prisma.streak.create({
+        data: { userId: user.id, currentStreak: 0, longestStreak: 0, thisMonthCount: 0 },
+      });
+    }
+
+    const resourcesShared = await prisma.resource.count({ where: { contributorId: user.id } });
+    const questionsAnswered = await prisma.answer.count({ where: { authorId: user.id } });
+
+    let currentStreak = streak.currentStreak;
+    let longestStreak = streak.longestStreak;
+    if (currentStreak === 0 && (resourcesShared > 0 || questionsAnswered > 0)) {
+      currentStreak = 1;
+      if (longestStreak < 1) longestStreak = 1;
+      await prisma.streak.update({
+        where: { userId: user.id },
+        data: { currentStreak: 1, longestStreak, lastContributionDate: new Date() },
+      });
+    }
+
     res.json({
       success: true,
+      streak: {
+        current: currentStreak,
+        longest: longestStreak,
+        thisMonth: Math.max(streak.thisMonthCount, resourcesShared + questionsAnswered),
+        resourcesShared,
+        questionsAnswered,
+      },
       corres: assignment
         ? {
             id: assignment.senior.id,

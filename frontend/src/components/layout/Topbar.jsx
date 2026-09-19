@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Icon from '../common/Icon';
 import { useSocket } from '../../context/SocketContext';
+import StreakCalendarModal from '../common/StreakCalendarModal';
 
 const TITLES = {
   dashboard: 'Dashboard',
@@ -17,14 +18,15 @@ const TITLES = {
   profile: 'Profile',
   juniors: 'My Juniors',
   contributions: 'Contributions',
-  users: 'Users',
-  batches: 'Batches',
-  assignments: 'Corres Assignment Management',
-  moderation: 'Moderation',
+  users: 'User Management',
+  batches: 'Batch Configuration',
+  assignments: 'Corres Assignment Engine',
+  moderation: 'Moderation & Reports',
 };
 
-export function Topbar({ screen, nav, onLogout, setMobileOpen, onSearch }) {
+export function Topbar({ screen, nav, user, onLogout, setMobileOpen, onSearch }) {
   const [query, setQuery] = useState('');
+  const [showStreakModal, setShowStreakModal] = useState(false);
   const { unreadNotifsCount } = useSocket();
 
   const handleKeyDown = (e) => {
@@ -33,46 +35,77 @@ export function Topbar({ screen, nav, onLogout, setMobileOpen, onSearch }) {
     }
   };
 
-  return (
-    <div className="topbar">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button
-          className="icon-btn menu-btn"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-        >
-          <Icon name="menu" />
-        </button>
-        <div className="topbar-title">{TITLES[screen] || 'Dashboard'}</div>
-      </div>
+  const streakCount = user?.streak?.currentStreak ?? user?.streakCount ?? 0;
+  const longestStreak = user?.streak?.longestStreak ?? user?.longestStreak ?? streakCount;
+  const totalContributions = user?.totalContributions ?? (user?.streak?.thisMonthCount || 0);
 
-      <div className="topbar-right">
-        <div className="search-bar" style={{ width: 220 }}>
-          <Icon name="search" />
-          <input
-            placeholder="Search..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
+  return (
+    <>
+      <header className="topbar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            className="icon-btn menu-btn"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Icon name="menu" />
+          </button>
+          <h1 className="topbar-title" style={{ margin: 0 }}>
+            {TITLES[screen] || 'Dashboard'}
+          </h1>
         </div>
 
-        <button
-          className="icon-btn"
-          onClick={() => nav('notifications')}
-          aria-label="Notifications"
-        >
-          <Icon name="bell" />
-          {unreadNotifsCount > 0 && <span className="dot" />}
-        </button>
+        <div className="topbar-right">
+          <div className="search-bar" style={{ width: 220 }}>
+            <Icon name="search" />
+            <input
+              placeholder="Search CorresBuddy..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              aria-label="Search"
+            />
+          </div>
 
-        <button className="icon-btn" onClick={onLogout} aria-label="Log out">
-          <Icon name="logout" />
-        </button>
-      </div>
-    </div>
+          {/* Streak Flame Badge */}
+          <button
+            type="button"
+            className="streak-badge-btn"
+            onClick={() => setShowStreakModal(true)}
+            title="View contribution streak & activity calendar"
+            aria-label={`Contribution streak: ${streakCount} days`}
+          >
+            <span>🔥</span>
+            <span>{streakCount}</span>
+          </button>
+
+          {/* Notifications Button */}
+          <button
+            className="icon-btn"
+            onClick={() => nav('notifications')}
+            aria-label="Notifications"
+          >
+            <Icon name="bell" />
+            {unreadNotifsCount > 0 && <span className="dot" />}
+          </button>
+
+          {/* Logout Button */}
+          <button className="icon-btn" onClick={onLogout} aria-label="Log out" title="Log out">
+            <Icon name="logout" />
+          </button>
+        </div>
+      </header>
+
+      {/* Contribution Calendar Modal */}
+      <StreakCalendarModal
+        isOpen={showStreakModal}
+        onClose={() => setShowStreakModal(false)}
+        streakCount={streakCount}
+        longestStreak={longestStreak}
+        totalContributions={totalContributions}
+      />
+    </>
   );
 }
 
 export default Topbar;
-

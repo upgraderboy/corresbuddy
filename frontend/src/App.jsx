@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 
 // Layout
 import Sidebar from './components/layout/Sidebar';
 import Topbar from './components/layout/Topbar';
 import MobileNav from './components/layout/MobileNav';
+import Footer from './components/layout/Footer';
+import ScrollToTopBottom from './components/common/ScrollToTopBottom';
 
 // Auth
 import LoginScreen from './components/auth/LoginScreen';
@@ -48,18 +51,11 @@ import AdminModerationScreen from './components/admin/AdminModerationScreen';
 
 export function App() {
   const { user, token, role, logout, switchPreviewRole, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [phase, setPhase] = useState(() => (localStorage.getItem('token') ? 'app' : 'login'));
-  const [screen, setScreen] = useState('dashboard');
-  const [screenData, setScreenData] = useState(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [saved, setSaved] = useState(['res-1']);
-
-  const nav = (key, data = null) => {
-    setScreen(key);
-    setScreenData(data);
-    window.scrollTo(0, 0);
-  };
 
   const toggleSave = (id) => {
     setSaved((prev) =>
@@ -67,9 +63,93 @@ export function App() {
     );
   };
 
+  // Maps navigation keys and legacy calls to exact URL paths
+  const nav = (key, data = null) => {
+    switch (key) {
+      case 'dashboard':
+        navigate('/dashboard');
+        break;
+      case 'corres':
+        navigate('/corres');
+        break;
+      case 'juniors':
+        navigate('/juniors');
+        break;
+      case 'contributions':
+        navigate('/contributions');
+        break;
+      case 'resources':
+        navigate('/resources', { state: data });
+        break;
+      case 'upload':
+        navigate('/resources/upload', { state: data });
+        break;
+      case 'resourceDetail': {
+        const resId = data?.id || (typeof data === 'string' ? data : '');
+        navigate(`/resources/${resId}`, { state: data });
+        break;
+      }
+      case 'saved':
+        navigate('/saved');
+        break;
+      case 'qa':
+        navigate('/qa', { state: data });
+        break;
+      case 'question': {
+        const qId = data?.id || (typeof data === 'string' ? data : '');
+        navigate(`/qa/${qId}`, { state: data });
+        break;
+      }
+      case 'chat':
+        navigate('/chat', { state: data });
+        break;
+      case 'lineage':
+        navigate('/lineage');
+        break;
+      case 'notifications':
+        navigate('/notifications');
+        break;
+      case 'profile':
+        navigate('/profile');
+        break;
+      case 'users':
+        navigate('/admin/users');
+        break;
+      case 'batches':
+        navigate('/admin/batches');
+        break;
+      case 'assignments':
+        navigate('/admin/assignments');
+        break;
+      case 'moderation':
+        navigate('/admin/moderation');
+        break;
+      default:
+        navigate(`/${key}`);
+        break;
+    }
+  };
+
   const handleSearch = (query) => {
     nav('resources', { initialSearch: query });
   };
+
+  // Derive active screen string from current URL pathname
+  const getScreenFromPath = (pathname) => {
+    if (pathname.startsWith('/resources/upload')) return 'upload';
+    if (pathname.startsWith('/resources/')) return 'resourceDetail';
+    if (pathname.startsWith('/resources')) return 'resources';
+    if (pathname.startsWith('/qa/')) return 'question';
+    if (pathname.startsWith('/qa')) return 'qa';
+    if (pathname.startsWith('/admin/users')) return 'users';
+    if (pathname.startsWith('/admin/batches')) return 'batches';
+    if (pathname.startsWith('/admin/assignments')) return 'assignments';
+    if (pathname.startsWith('/admin/moderation')) return 'moderation';
+    const clean = pathname.replace(/^\//, '').split('/')[0];
+    return clean || 'dashboard';
+  };
+
+  const screen = getScreenFromPath(location.pathname);
 
   if (loading) {
     return (
@@ -89,99 +169,58 @@ export function App() {
     );
   }
 
+  // Unauthenticated routing
   if (!token) {
-    if (phase === 'onboarding') {
-      return (
-        <OnboardingScreen
-          onDone={() => {
-            setPhase('app');
-            setScreen('dashboard');
-          }}
-          goLogin={() => setPhase('login')}
+    return (
+      <Routes>
+        <Route
+          path="/register"
+          element={
+            <OnboardingScreen
+              onDone={() => navigate('/dashboard')}
+              goLogin={() => navigate('/login')}
+            />
+          }
         />
-      );
-    }
-    return (
-      <LoginScreen
-        onLogin={() => {
-          setPhase('app');
-          setScreen('dashboard');
-        }}
-        goRegister={() => setPhase('onboarding')}
-      />
+        <Route
+          path="/onboarding"
+          element={
+            <OnboardingScreen
+              onDone={() => navigate('/dashboard')}
+              goLogin={() => navigate('/login')}
+            />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <LoginScreen
+              onLogin={() => navigate('/dashboard')}
+              goRegister={() => navigate('/register')}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     );
   }
 
-  if (phase === 'onboarding') {
-    return (
-      <OnboardingScreen
-        onDone={() => {
-          setPhase('app');
-          setScreen('dashboard');
-        }}
-        goLogin={() => setPhase('login')}
-      />
+  // If authenticated user visits login or register, redirect to dashboard
+  if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/onboarding') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const isAdmin = user?.email === 'admin@celestia-trichy.me' && (role === 'admin' || user?.role === 'ADMIN');
+
+  // Role-appropriate Dashboard component
+  const DashboardComponent =
+    isAdmin ? (
+      <AdminDashboard />
+    ) : role === 'senior' || role === 'alumni' ? (
+      <SeniorDashboard nav={nav} user={user} />
+    ) : (
+      <StudentDashboard nav={nav} user={user} />
     );
-  }
-
-  // Determine active view body
-  let body;
-
-  if (role === 'student') {
-    if (screen === 'dashboard') body = <StudentDashboard nav={nav} user={user} />;
-    else if (screen === 'corres') body = <MyCorresScreen nav={nav} user={user} />;
-    else if (screen === 'resources')
-      body = <ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave} />;
-    else if (screen === 'resourceDetail')
-      body = <ResourceDetailScreen resource={screenData} nav={nav} saved={saved} toggleSave={toggleSave} />;
-    else if (screen === 'upload') body = <UploadResourceScreen nav={nav} role={role} screenData={screenData} />;
-    else if (screen === 'qa') body = <QAScreen nav={nav} user={user} />;
-    else if (screen === 'question')
-      body = <QuestionDetailScreen question={screenData} nav={nav} user={user} />;
-    else if (screen === 'chat') body = <ChatScreen user={user} screenData={screenData} />;
-    else if (screen === 'lineage') body = <LineageScreen user={user} nav={nav} />;
-    else if (screen === 'saved')
-      body = <SavedResourcesScreen saved={saved} nav={nav} toggleSave={toggleSave} />;
-    else if (screen === 'notifications') body = <NotificationsScreen />;
-    else if (screen === 'profile') body = <ProfileScreen role={role} user={user} />;
-  } else if (role === 'senior' || role === 'alumni') {
-    if (screen === 'dashboard') body = <SeniorDashboard nav={nav} user={user} />;
-    else if (screen === 'juniors') body = <MyJuniorsScreen nav={nav} />;
-    else if (screen === 'resources')
-      body = <ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave} />;
-    else if (screen === 'resourceDetail')
-      body = <ResourceDetailScreen resource={screenData} nav={nav} saved={saved} toggleSave={toggleSave} />;
-    else if (screen === 'upload') body = <UploadResourceScreen nav={nav} role={role} screenData={screenData} />;
-    else if (screen === 'qa') body = <QAScreen nav={nav} user={user} />;
-    else if (screen === 'question')
-      body = <QuestionDetailScreen question={screenData} nav={nav} user={user} />;
-    else if (screen === 'chat') body = <ChatScreen user={user} screenData={screenData} />;
-    else if (screen === 'contributions') body = <ContributionsScreen />;
-    else if (screen === 'notifications') body = <NotificationsScreen />;
-    else if (screen === 'profile') body = <ProfileScreen role={role} user={user} />;
-  } else {
-    // Admin
-    if (screen === 'dashboard') body = <AdminDashboard />;
-    else if (screen === 'users') body = <AdminUsersScreen />;
-    else if (screen === 'batches') body = <AdminBatchesScreen />;
-    else if (screen === 'assignments') body = <AdminAssignmentsScreen />;
-    else if (screen === 'resources')
-      body = <ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave} />;
-    else if (screen === 'resourceDetail')
-      body = <ResourceDetailScreen resource={screenData} nav={nav} saved={saved} toggleSave={toggleSave} />;
-    else if (screen === 'moderation') body = <AdminModerationScreen />;
-  }
-
-  if (!body) {
-    body =
-      role === 'student' ? (
-        <StudentDashboard nav={nav} user={user} />
-      ) : role === 'senior' || role === 'alumni' ? (
-        <SeniorDashboard nav={nav} user={user} />
-      ) : (
-        <AdminDashboard />
-      );
-  }
 
   return (
     <div className="app-shell">
@@ -199,15 +238,90 @@ export function App() {
         <Topbar
           screen={screen}
           nav={nav}
+          user={user}
           onLogout={() => {
             logout();
-            setPhase('login');
+            navigate('/login');
           }}
           setMobileOpen={setMobileOpen}
           onSearch={handleSearch}
         />
 
-        <div className="content">{body}</div>
+        <main className="content" role="main">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={DashboardComponent} />
+
+            {/* Student & Senior Shared / Specific */}
+            <Route path="/corres" element={<MyCorresScreen nav={nav} user={user} />} />
+            <Route path="/juniors" element={<MyJuniorsScreen nav={nav} />} />
+            <Route path="/contributions" element={<ContributionsScreen />} />
+
+            {/* Resources */}
+            <Route
+              path="/resources"
+              element={<ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave} />}
+            />
+            <Route
+              path="/resources/upload"
+              element={<UploadResourceScreen nav={nav} role={role} screenData={location.state} />}
+            />
+            <Route
+              path="/resources/:id"
+              element={
+                <ResourceDetailScreen
+                  resource={location.state}
+                  nav={nav}
+                  saved={saved}
+                  toggleSave={toggleSave}
+                />
+              }
+            />
+            <Route
+              path="/saved"
+              element={<SavedResourcesScreen saved={saved} nav={nav} toggleSave={toggleSave} />}
+            />
+
+            {/* Q&A */}
+            <Route path="/qa" element={<QAScreen nav={nav} user={user} />} />
+            <Route
+              path="/qa/:id"
+              element={<QuestionDetailScreen question={location.state} nav={nav} user={user} />}
+            />
+
+            {/* Chat & Lineage */}
+            <Route path="/chat" element={<ChatScreen user={user} screenData={location.state} />} />
+            <Route path="/lineage" element={<LineageScreen user={user} nav={nav} />} />
+
+            {/* Notifications & Profile */}
+            <Route path="/notifications" element={<NotificationsScreen />} />
+            <Route path="/profile" element={<ProfileScreen role={role} user={user} />} />
+
+            {/* Admin Protected Routes: strictly restricted to admin@celestia-trichy.me */}
+            <Route
+              path="/admin/users"
+              element={isAdmin ? <AdminUsersScreen /> : <Navigate to="/dashboard" replace />}
+            />
+            <Route
+              path="/admin/batches"
+              element={isAdmin ? <AdminBatchesScreen /> : <Navigate to="/dashboard" replace />}
+            />
+            <Route
+              path="/admin/assignments"
+              element={isAdmin ? <AdminAssignmentsScreen /> : <Navigate to="/dashboard" replace />}
+            />
+            <Route
+              path="/admin/moderation"
+              element={isAdmin ? <AdminModerationScreen /> : <Navigate to="/dashboard" replace />}
+            />
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
+
+        <Footer />
+        <ScrollToTopBottom />
       </div>
 
       <MobileNav role={role} screen={screen} nav={nav} />
@@ -216,4 +330,3 @@ export function App() {
 }
 
 export default App;
-
