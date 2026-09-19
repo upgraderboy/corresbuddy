@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Corres — Cross-Generational Knowledge Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<style>
+:root{
+  --ink-900:#0B1F3A; --ink-800:#123058; --ink-700:#1B4477; --ink-600:#265998;
+  --brass-500:#C9A227; --brass-600:#A2811C; --brass-100:#F5EAC7;
+  --paper-0:#FFFFFF; --paper-50:#F6F5F1; --paper-100:#EDEBE2; --paper-200:#E1DDCF;
+  --sage-500:#3F6F5C; --sage-100:#DCEAE3;
+  --rust-500:#AE4F3B; --rust-100:#F3DFDA;
+  --slate-500:#5B6B7A; --slate-300:#93A0AC;
+  --border:#DFDBCF; --text-900:#182430; --text-600:#535F6B; --text-400:#8993A0;
+  --r-sm:8px; --r-md:14px; --r-lg:22px;
+  --font-d:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-b:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --shadow-1: 0 1px 2px rgba(14,27,44,.06);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper-0:#111925; --paper-50:#0B121B; --paper-100:#161F2C; --paper-200:#1E2836;
+    --border:#263242; --text-900:#EBEEF2; --text-600:#A7B1BD; --text-400:#71808F;
+    --brass-100:#3A331F; --sage-100:#16281F; --rust-100:#301A15;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper-0:#111925; --paper-50:#0B121B; --paper-100:#161F2C; --paper-200:#1E2836;
+  --border:#263242; --text-900:#EBEEF2; --text-600:#A7B1BD; --text-400:#71808F;
+  --brass-100:#3A331F; --sage-100:#16281F; --rust-100:#301A15;
+  color-scheme: dark;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font-b); background:var(--paper-50); color:var(--text-900);
+  -webkit-font-smoothing:antialiased;
+}
+#root{min-height:100vh;}
+img{max-width:100%;display:block;}
+button{font-family:inherit;cursor:pointer;}
+a{color:inherit;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+
+h1,h2,h3,h4{font-family:var(--font-d); margin:0; color:var(--text-900); font-weight:600;}
+p{margin:0;}
+
+.app-shell{display:flex; min-height:100vh;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:264px; flex-shrink:0; background:var(--ink-900); color:#EDEFF3;
+  display:flex; flex-direction:column; padding:26px 18px 18px;
+  position:sticky; top:0; height:100vh;
+}
+.brand{display:flex; align-items:center; gap:10px; padding:0 6px 22px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:18px;}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(160deg,var(--brass-500),var(--brass-600));display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-weight:700;color:#1B140A;font-size:16px;flex-shrink:0;}
+.brand-name{font-family:var(--font-d); font-size:19px; font-weight:600; color:#fff; line-height:1.1;}
+.brand-sub{font-size:11px; color:#93A2B4; letter-spacing:.02em;}
+
+.nav-list{display:flex; flex-direction:column; gap:2px; flex:1; overflow-y:auto;}
+.nav-item{
+  display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px;
+  color:#B9C3D1; background:transparent; border:none; text-align:left; width:100%;
+  font-size:14.5px; font-weight:500; transition:background .12s ease, color .12s ease;
+}
+.nav-item:hover{background:rgba(255,255,255,.06); color:#fff;}
+.nav-item.active{background:rgba(184,134,59,.18); color:#fff;}
+.nav-item.active .nav-ic{color:var(--brass-500);}
+.nav-ic{width:19px;height:19px;flex-shrink:0;color:#8FA0B4;}
+.nav-item.active .nav-ic, .nav-item:hover .nav-ic{color:inherit;}
+
+.sidebar-foot{border-top:1px solid rgba(255,255,255,.08); padding-top:14px; margin-top:10px;}
+.role-preview{background:rgba(255,255,255,.05); border-radius:12px; padding:10px 12px; margin-bottom:12px;}
+.role-preview-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:#7C8AA0; margin-bottom:8px;}
+.role-seg{display:flex; gap:4px; background:rgba(0,0,0,.25); border-radius:9px; padding:3px;}
+.role-seg button{flex:1; border:none; background:transparent; color:#9AA7B8; font-size:12px; font-weight:600; padding:7px 4px; border-radius:7px;}
+.role-seg button.active{background:#fff; color:var(--ink-900);}
+.user-chip{display:flex; align-items:center; gap:10px; padding:8px 6px;}
+.avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+.user-chip .avatar{background:var(--brass-100); color:var(--brass-600);}
+.user-chip-name{font-size:13.5px; font-weight:600; color:#fff;}
+.user-chip-meta{font-size:11.5px; color:#8A98AC;}
+
+/* ---------- Topbar / content ---------- */
+.main-col{flex:1; min-width:0; display:flex; flex-direction:column;}
+.topbar{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:16px 32px; border-bottom:1px solid var(--border); background:var(--paper-0);
+  position:sticky; top:0; z-index:5;
+}
+.topbar-title{font-family:var(--font-d); font-size:21px; font-weight:600;}
+.topbar-right{display:flex; align-items:center; gap:14px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--paper-0);
+  display:flex;align-items:center;justify-content:center;color:var(--text-600); position:relative;
+}
+.icon-btn .dot{position:absolute; top:6px; right:6px; width:7px;height:7px;border-radius:50%;background:var(--rust-500); border:1.5px solid var(--paper-0);}
+.menu-btn{display:none;}
+
+.content{padding:28px 32px 100px; max-width:1180px; width:100%; margin:0 auto;}
+
+/* ---------- Generic components ---------- */
+.icon{width:1em;height:1em; display:inline-block; vertical-align:-0.14em;}
+.eyebrow{color:var(--text-600); font-size:13.5px; margin-bottom:4px;}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap;}
+.page-head h1{font-size:28px;}
+.subhead{color:var(--text-600); font-size:14.5px; margin-top:6px; max-width:60ch;}
+
+.btn{
+  display:inline-flex; align-items:center; gap:8px; border-radius:10px; padding:10px 16px;
+  font-size:14px; font-weight:600; border:1px solid transparent; white-space:nowrap;
+}
+.btn-primary{background:var(--ink-900); color:#fff;}
+.btn-primary:hover{background:var(--ink-800);}
+.btn-brass{background:var(--brass-500); color:#241A08;}
+.btn-brass:hover{background:var(--brass-600); color:#fff;}
+.btn-ghost{background:transparent; border-color:var(--border); color:var(--text-900);}
+.btn-ghost:hover{background:var(--paper-100);}
+.btn-sm{padding:7px 12px; font-size:13px; border-radius:8px;}
+
+.card{background:var(--paper-0); border:1px solid var(--border); border-radius:var(--r-md); padding:20px;}
+.grid{display:grid; gap:16px;}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+@media (max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}}
+
+.badge{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:99px; letter-spacing:.01em;}
+.badge-sage{background:var(--sage-100); color:var(--sage-500);}
+.badge-brass{background:var(--brass-100); color:var(--brass-600);}
+.badge-rust{background:var(--rust-100); color:var(--rust-500);}
+.badge-slate{background:var(--paper-100); color:var(--text-600);}
+
+.stat-card{background:var(--paper-0); border:1px solid var(--border); border-radius:var(--r-md); padding:18px 20px;}
+.stat-num{font-family:var(--font-d); font-size:28px; font-weight:600;}
+.stat-label{color:var(--text-600); font-size:13px; margin-top:4px;}
+
+.empty{border:1px dashed var(--border); border-radius:var(--r-md); padding:40px 24px; text-align:center; color:var(--text-600);}
+.empty .icon{width:30px;height:30px; color:var(--text-400); margin-bottom:10px;}
+.empty-title{color:var(--text-900); font-weight:600; margin-bottom:4px; font-family:var(--font-d); font-size:16px;}
+
+.skeleton{background:linear-gradient(90deg,var(--paper-100) 25%,var(--paper-200) 37%,var(--paper-100) 63%); background-size:400% 100%; animation:sk 1.4s ease infinite; border-radius:8px;}
+@keyframes sk{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+
+.divider{height:1px; background:var(--border); margin:18px 0;}
+.input, select, textarea.ta{
+  width:100%; border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px;
+  background:var(--paper-0); color:var(--text-900); font-family:inherit;
+}
+.field{display:flex; flex-direction:column; gap:6px; margin-bottom:14px;}
+.field label{font-size:13px; font-weight:600; color:var(--text-700,var(--text-900));}
+.search-bar{display:flex; align-items:center; gap:8px; border:1px solid var(--border); border-radius:10px; padding:9px 12px; background:var(--paper-0); color:var(--text-600);}
+.search-bar input{border:none; outline:none; background:transparent; flex:1; font-size:14px; color:var(--text-900);}
+
+.tab-row{display:flex; gap:6px; border-bottom:1px solid var(--border); margin-bottom:20px; overflow-x:auto;}
+.tab-btn{padding:10px 4px; margin-right:20px; border:none; background:transparent; font-weight:600; font-size:14px; color:var(--text-600); border-bottom:2px solid transparent; white-space:nowrap;}
+.tab-btn.active{color:var(--text-900); border-color:var(--brass-500);}
+
+.chip{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); border-radius:99px; padding:6px 12px; font-size:12.5px; font-weight:600; color:var(--text-600); background:var(--paper-0);}
+.chip.active{background:var(--ink-900); border-color:var(--ink-900); color:#fff;}
+
+table{width:100%; border-collapse:collapse; font-size:13.5px;}
+th{text-align:left; color:var(--text-600); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.04em; padding:10px 14px; border-bottom:1px solid var(--border);}
+td{padding:13px 14px; border-bottom:1px solid var(--border); vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--r-md);}
+.table-wrap table{min-width:640px;}
+
+/* ---------- Login / onboarding ---------- */
+.auth-shell{min-height:100vh; display:flex;}
+.auth-visual{flex:1; background:radial-gradient(circle at 25% 20%, #8A1B33 0%, var(--ink-900) 55%, #2B0710 100%); color:#fff; padding:60px; display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden;}
+.auth-visual .lineage-deco{position:absolute; right:-40px; bottom:-40px; opacity:.5;}
+.auth-form-side{width:460px; flex-shrink:0; display:flex; align-items:center; justify-content:center; padding:40px; background:var(--paper-0);}
+@media (max-width:860px){.auth-visual{display:none;} .auth-form-side{width:100%;}}
+.auth-box{width:100%; max-width:360px;}
+.gen-line{display:flex; align-items:center; gap:12px; font-size:14px; color:#C7D2E0; padding:8px 0;}
+.gen-dot{width:9px;height:9px;border-radius:50%; background:var(--brass-500); flex-shrink:0;}
+
+/* ---------- Corres / lineage ---------- */
+.corres-card{border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; background:var(--paper-0);}
+.corres-card-top{padding:22px 24px; display:flex; gap:16px; align-items:flex-start; border-left:5px solid var(--brass-500);}
+.corres-avatar{width:58px;height:58px;border-radius:14px;background:var(--ink-900);color:#EFE2C4;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:20px;font-weight:600;flex-shrink:0;}
+.corres-card-foot{display:flex; border-top:1px solid var(--border);}
+.corres-card-foot button{flex:1; padding:14px; border:none; background:transparent; font-weight:600; font-size:13.5px; display:flex; align-items:center; justify-content:center; gap:7px;}
+.corres-card-foot button+button{border-left:1px solid var(--border);}
+
+.lineage{position:relative; padding-left:28px;}
+.lineage::before{content:'';position:absolute; left:9px; top:6px; bottom:6px; width:2px; background:var(--border);}
+.lineage-node{position:relative; padding:0 0 26px 20px; cursor:pointer;}
+.lineage-node::before{content:''; position:absolute; left:-28px; top:2px; width:14px; height:14px; border-radius:50%; background:var(--paper-0); border:3px solid var(--slate-300);}
+.lineage-node.you::before{border-color:var(--brass-500); background:var(--brass-500);}
+.lineage-node.selected::before{border-color:var(--sage-500); background:var(--sage-500);}
+.lineage-node:last-child{padding-bottom:0;}
+.lineage-card{border:1px solid var(--border); border-radius:12px; padding:14px 16px; background:var(--paper-0);}
+.lineage-card:hover{border-color:var(--brass-500);}
+
+/* ---------- Resource card ---------- */
+.res-card{border:1px solid var(--border); border-radius:var(--r-md); padding:17px; background:var(--paper-0); display:flex; flex-direction:column; gap:10px;}
+.res-top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+.res-icon{width:38px;height:38px;border-radius:10px;background:var(--paper-100);display:flex;align-items:center;justify-content:center;color:var(--ink-700); flex-shrink:0;}
+.res-title{font-weight:600; font-size:15px; line-height:1.3;}
+.res-meta{color:var(--text-600); font-size:12.5px;}
+.res-tags{display:flex; flex-wrap:wrap; gap:6px;}
+.tag{font-size:11px; font-weight:600; color:var(--text-600); background:var(--paper-100); padding:3px 8px; border-radius:99px;}
+.res-actions{display:flex; gap:8px; margin-top:auto; padding-top:6px;}
+.res-actions .btn{flex:1; justify-content:center;}
+
+/* ---------- Q&A ---------- */
+.q-card{border:1px solid var(--border); border-radius:var(--r-md); padding:17px 18px; background:var(--paper-0); display:flex; gap:14px; cursor:pointer;}
+.q-stat{width:50px; text-align:center; flex-shrink:0;}
+.q-stat b{display:block; font-size:16px; font-family:var(--font-d);}
+.q-stat span{font-size:10.5px; color:var(--text-600); text-transform:uppercase;}
+.answer-box{border:1px solid var(--border); border-radius:12px; padding:15px 16px; background:var(--paper-0);}
+.answer-box.accepted{border-color:var(--sage-500); background:var(--sage-100);}
+
+/* ---------- Chat ---------- */
+.chat-shell{display:grid; grid-template-columns:290px 1fr; border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; height:calc(100vh - 190px); min-height:460px; background:var(--paper-0);}
+@media (max-width:760px){.chat-shell{grid-template-columns:1fr; height:auto;}}
+.conv-list{border-right:1px solid var(--border); overflow-y:auto;}
+.conv-item{display:flex; gap:10px; padding:13px 16px; border-bottom:1px solid var(--border); align-items:center;}
+.conv-item.active{background:var(--paper-100);}
+.conv-name{font-weight:600; font-size:14px;}
+.conv-preview{font-size:12.5px; color:var(--text-600); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;}
+.chat-window{display:flex; flex-direction:column; min-height:0;}
+.chat-head{display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--border);}
+.chat-body{flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:10px;}
+.bubble{max-width:65%; padding:10px 14px; border-radius:14px; font-size:14px; line-height:1.4;}
+.bubble.me{align-self:flex-end; background:var(--ink-900); color:#fff; border-bottom-right-radius:3px;}
+.bubble.them{align-self:flex-start; background:var(--paper-100); border-bottom-left-radius:3px;}
+.bubble-time{font-size:10.5px; opacity:.6; margin-top:4px;}
+.typing-row{align-self:flex-start; font-size:12.5px; color:var(--text-600); font-style:italic;}
+.chat-input{display:flex; gap:10px; padding:14px 16px; border-top:1px solid var(--border);}
+.chat-input input{flex:1; border:1px solid var(--border); border-radius:99px; padding:11px 16px; font-size:14px; background:var(--paper-50);}
+
+/* ---------- Contribution / streak ---------- */
+.streak-band{display:flex; align-items:center; gap:14px; background:linear-gradient(120deg,var(--ink-900),var(--ink-700)); color:#fff; border-radius:var(--r-lg); padding:20px 24px;}
+.streak-flame{width:46px;height:46px;border-radius:12px;background:rgba(184,134,59,.25); display:flex;align-items:center;justify-content:center; color:var(--brass-500); flex-shrink:0;}
+.cal-grid{display:grid; grid-template-columns:repeat(14,1fr); gap:5px;}
+.cal-cell{aspect-ratio:1; border-radius:4px; background:var(--paper-100);}
+.cal-cell.l1{background:var(--sage-100);}
+.cal-cell.l2{background:#9BC3B0;}
+.cal-cell.l3{background:var(--sage-500);}
+
+/* ---------- Notifications ---------- */
+.notif-item{display:flex; gap:13px; padding:15px 4px; border-bottom:1px solid var(--border);}
+.notif-item:last-child{border-bottom:none;}
+.notif-ic{width:36px;height:36px;border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+.notif-time{font-size:12px; color:var(--text-400); white-space:nowrap;}
+
+/* ---------- Mobile bottom nav ---------- */
+.bottom-nav{display:none;}
+@media (max-width:860px){
+  .sidebar{display:none;}
+  .sidebar.open{display:flex; position:fixed; inset:0 auto 0 0; z-index:50; width:78vw; max-width:300px; box-shadow:0 0 0 100vw rgba(0,0,0,.4);}
+  .menu-btn{display:flex;}
+  .content{padding:20px 16px 90px;}
+  .topbar{padding:14px 16px;}
+  .bottom-nav{display:flex; position:fixed; bottom:0; left:0; right:0; background:var(--paper-0); border-top:1px solid var(--border); z-index:20; padding:6px 4px 8px;}
+  .bottom-nav button{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; background:none; border:none; color:var(--text-400); font-size:10.5px; padding:6px 2px;}
+  .bottom-nav button.active{color:var(--ink-900);}
+  .bottom-nav .nav-ic{width:20px;height:20px;}
+}
+.hint-banner{display:flex; gap:12px; align-items:flex-start; background:var(--brass-100); border:1px solid var(--brass-500); border-radius:var(--r-md); padding:14px 16px; margin-bottom:22px; color:var(--ink-900); font-size:13.5px;}
+.hint-banner b{display:block; font-size:14px; margin-bottom:2px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {useState, useMemo, useEffect, useRef} = React;
+
+/* ============================= ICONS ============================= */
+function Icon({name, className, style}) {
+  const p = {fill:'none', stroke:'currentColor', strokeWidth:'1.8', strokeLinecap:'round', strokeLinejoin:'round'};
+  const map = {
+    home: <><path {...p} d="M4 11.5 12 4l8 7.5"/><path {...p} d="M6 10v9h12v-9"/><path {...p} d="M10 19v-5h4v5"/></>,
+    users: <><circle {...p} cx="8.5" cy="8" r="3.2"/><path {...p} d="M2.5 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle {...p} cx="17" cy="9" r="2.6"/><path {...p} d="M15.2 13.7c2.6.4 4.3 2.3 4.3 5.3"/></>,
+    book: <><path {...p} d="M4 5.2C6 4.3 9 4.3 12 5.6c3-1.3 6-1.3 8 -.4v13.6c-2-.9-5-.9-8 .4-3-1.3-6-1.3-8-.4Z"/><path {...p} d="M12 5.6v13.6"/></>,
+    help: <><circle {...p} cx="12" cy="12" r="9"/><path {...p} d="M9.5 9.3a2.5 2.5 0 1 1 3.6 2.2c-.9.5-1.4 1-1.4 2.1"/><circle cx="12" cy="16.7" r="1" fill="currentColor" stroke="none"/></>,
+    message: <><path {...p} d="M3.5 5.5h17v11h-9L7 20v-3.5H3.5Z"/></>,
+    layers: <><path {...p} d="m12 3 9 4.5-9 4.5-9-4.5Z"/><path {...p} d="m3 12 9 4.5 9-4.5"/><path {...p} d="m3 16.5 9 4.5 9-4.5"/></>,
+    bookmark: <path {...p} d="M6 3.5h12v17l-6-4-6 4Z"/>,
+    bell: <><path {...p} d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path {...p} d="M10 19a2 2 0 0 0 4 0"/></>,
+    user: <><circle {...p} cx="12" cy="8" r="3.6"/><path {...p} d="M4.5 20c0-4.1 3.3-6.6 7.5-6.6s7.5 2.5 7.5 6.6"/></>,
+    shield: <path {...p} d="M12 3.5 19 6v6c0 4.5-3 7.5-7 8.5-4-1-7-4-7-8.5V6Z"/>,
+    upload: <><path {...p} d="M12 15V4"/><path {...p} d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path {...p} d="M4.5 15v4.5h15V15"/></>,
+    download: <><path {...p} d="M12 4v11"/><path {...p} d="m7.5 11 4.5 4.5 4.5-4.5"/><path {...p} d="M4.5 19.5h15"/></>,
+    search: <><circle {...p} cx="10.5" cy="10.5" r="6.5"/><path {...p} d="m19.5 19.5-4.4-4.4"/></>,
+    filter: <path {...p} d="M4 5h16l-6 7v6l-4 2v-8Z"/>,
+    check: <><circle {...p} cx="12" cy="12" r="9"/><path {...p} d="m8 12.3 2.6 2.6L16.3 9"/></>,
+    flame: <path {...p} d="M12 3s5 4.5 5 9.5a5 5 0 0 1-10 0c0-1.3.5-2.2 1.2-3.2.2 1 .9 1.5 1.6 1.3-.4-2 .3-4 2.2-7.6Z"/>,
+    plus: <path {...p} d="M12 4.5v15M4.5 12h15"/>,
+    send: <path {...p} d="m4 12 16-8-6 16-2.5-6.5Z"/>,
+    chevronRight: <path {...p} d="m9 6 6 6-6 6"/>,
+    chevronDown: <path {...p} d="m6 9 6 6 6-6"/>,
+    x: <path {...p} d="M6 6l12 12M18 6 6 18"/>,
+    menu: <path {...p} d="M4 7h16M4 12h16M4 17h16"/>,
+    star: <path {...p} d="m12 3.5 2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6-4.5-4.1 6-.7Z"/>,
+    branch: <><circle {...p} cx="6" cy="6" r="2.3"/><circle {...p} cx="6" cy="18" r="2.3"/><circle {...p} cx="18" cy="9" r="2.3"/><path {...p} d="M6 8.3V15.7"/><path {...p} d="M6 15.7C6 11 10 11 18 11.3"/></>,
+    settings: <><circle {...p} cx="12" cy="12" r="3.2"/><path {...p} d="M19 12a7 7 0 0 0-.15-1.4l1.9-1.5-2-3.4-2.3.8a7 7 0 0 0-2.4-1.4L13.5 3h-3l-.55 2.1a7 7 0 0 0-2.4 1.4l-2.3-.8-2 3.4L5.15 10.6A7 7 0 0 0 5 12c0 .5.05 1 .15 1.4l-1.9 1.5 2 3.4 2.3-.8a7 7 0 0 0 2.4 1.4L10.5 21h3l.55-2.1a7 7 0 0 0 2.4-1.4l2.3.8 2-3.4-1.9-1.5c.1-.4.15-.9.15-1.4Z"/></>,
+    logout: <><path {...p} d="M9 4.5H5.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1H9"/><path {...p} d="M14.5 16.5 19 12l-4.5-4.5"/><path {...p} d="M19 12H9"/></>,
+    clock: <><circle {...p} cx="12" cy="12" r="9"/><path {...p} d="M12 7v5l3.3 2"/></>,
+    dot: <circle cx="12" cy="12" r="4" fill="currentColor"/>,
+    check2: <path {...p} d="m5 13 4 4L19 7"/>,
+    dots: <><circle cx="6" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="18" cy="12" r="1.5" fill="currentColor"/></>,
+  };
+  return <svg className={"icon "+(className||"")} style={style} viewBox="0 0 24 24">{map[name]}</svg>;
+}
+
+/* ============================= MOCK DATA ============================= */
+const ME = {name:"Ak", initials:"AK", batch:2026, roll:9, program:"MCA", branch:"Computer Applications", college:"VIT Vellore"};
+
+const CORRES = {name:"Priya Menon", initials:"PM", batch:2025, roll:9, type:"SAME_ROLL",
+  headline:"Placed at a product company; strong in DBMS & interview prep", online:true};
+
+const FALLBACK_EXAMPLE = {name:"Rahul Iyer", initials:"RI", batch:2025, roll:null, type:"FALLBACK_TOP_PERFORMER"};
+
+const GENERATIONS = [
+  {batch:2026, roll:9, label:"You", you:true, contributions:0, resources:0},
+  {batch:2025, roll:9, label:"Priya Menon", you:false, role:"Corres", contributions:14, resources:6},
+  {batch:2024, roll:9, label:"Karthik Suresh", you:false, contributions:9, resources:4},
+  {batch:2023, roll:9, label:"Divya Nair", you:false, contributions:11, resources:5},
+  {batch:2022, roll:9, label:"Arjun Verma", you:false, contributions:6, resources:2},
+];
+
+const CATEGORIES = ["Study Material","Notes","Previous-Year Material","Placement Resources","Project Resources","Interview Experiences","Useful Links","Advice","Timetables","Study Plans"];
+
+const RESOURCES = [
+  {id:1, title:"DBMS Complete Notes — Unit 1 to 5", category:"Notes", subject:"DBMS", contributor:"Priya Menon", batch:2025, date:"Mar 2026", tags:["DBMS","CAT-2","Exam"], type:"pdf"},
+  {id:2, title:"MCA Placement Interview Experience — Product Co.", category:"Interview Experiences", subject:"Placements", contributor:"Priya Menon", batch:2025, date:"Feb 2026", tags:["Placements","Interview"], type:"doc"},
+  {id:3, title:"Handwritten DSA Problem Patterns", category:"Notes", subject:"DSA", contributor:"Karthik Suresh", batch:2024, date:"Nov 2025", tags:["DSA","Handwritten"], type:"image"},
+  {id:4, title:"Semester 1 Timetable — MCA Core", category:"Timetables", subject:"General", contributor:"Divya Nair", batch:2023, date:"Aug 2025", tags:["Timetable"], type:"pdf"},
+  {id:5, title:"CAT-1 Previous Year Question Bank", category:"Previous-Year Material", subject:"Operating Systems", contributor:"Karthik Suresh", batch:2024, date:"Sep 2025", tags:["OS","CAT-1"], type:"pdf"},
+  {id:6, title:"Study Plan — Clearing Backlogs in Sem 2", category:"Study Plans", subject:"General", contributor:"Priya Menon", batch:2025, date:"Jan 2026", tags:["Study Plan"], type:"doc"},
+  {id:7, title:"Useful Links — Free DSA Practice Platforms", category:"Useful Links", subject:"DSA", contributor:"Arjun Verma", batch:2022, date:"Jun 2024", tags:["DSA","Links"], type:"link"},
+  {id:8, title:"Advice — Choosing a Final Year Project", category:"Advice", subject:"Project", contributor:"Divya Nair", batch:2023, date:"Oct 2025", tags:["Project","Advice"], type:"doc"},
+];
+
+const QUESTIONS = [
+  {id:1, title:"How should I prepare for the DBMS CAT-2 exam?", subject:"DBMS", asker:"You", answers:2, accepted:true, time:"2h ago",
+    body:"The syllabus covers normalization, transactions and indexing. Not sure how deep to go for CAT-2 — any pointers from someone who's taken it?",
+    answersList:[
+      {author:"Priya Menon", batch:2025, accepted:true, time:"1h ago", content:"Focus heavily on normalization (up to BCNF) and transaction isolation levels — those carried the most weight last year. I shared my unit notes in Resources, worth going through before the exam."},
+      {author:"Karthik Suresh", batch:2024, accepted:false, time:"40m ago", content:"Agree with Priya. Also practice ER-to-relational mapping by hand, it came up as a full question for us."}
+    ]},
+  {id:2, title:"Best approach to crack MCA placements at product companies?", subject:"Placements", asker:"Sanjay R.", answers:1, accepted:true, time:"1d ago"},
+  {id:3, title:"Any recommended project ideas using MERN stack?", subject:"Project", asker:"You", answers:0, accepted:false, time:"3d ago"},
+  {id:4, title:"How strict is attendance for MCA labs at VIT?", subject:"General", asker:"Meera K.", answers:3, accepted:true, time:"5d ago"},
+];
+
+const CONVERSATIONS = [
+  {id:1, name:"Priya Menon", role:"Your Corres", last:"Sure, send me your resume draft whenever.", time:"9:41 AM", unread:0, online:true,
+    messages:[
+      {me:false, text:"Hey! Saw your question on DBMS CAT-2, hope the notes helped.", time:"9:12 AM"},
+      {me:true, text:"Yes, they were really clear. Thank you!", time:"9:15 AM"},
+      {me:true, text:"Also wanted to ask — any tips for the placement resume review?", time:"9:16 AM"},
+      {me:false, text:"Sure, send me your resume draft whenever.", time:"9:41 AM"},
+    ]},
+  {id:2, name:"Rahul Iyer", role:"Batch 2025 · Top Performer", last:"You: Thanks for the reference!", time:"Yesterday", unread:0, online:false, messages:[
+    {me:true, text:"Thanks for the reference!", time:"Yesterday"}
+  ]},
+];
+
+const NOTIFICATIONS = [
+  {id:1, icon:"message", tone:"brass", title:"Priya Menon sent you a message", body:"\"Sure, send me your resume draft whenever.\"", time:"5m ago", read:false},
+  {id:2, icon:"check", tone:"sage", title:"Your question was answered", body:"Priya Menon answered \"How should I prepare for the DBMS CAT-2 exam?\"", time:"1h ago", read:false},
+  {id:3, icon:"book", tone:"slate", title:"New resource from your Corres", body:"Priya Menon added \"DBMS Complete Notes — Unit 1 to 5\"", time:"1d ago", read:true},
+  {id:4, icon:"branch", tone:"slate", title:"Corres assigned", body:"You were matched with Priya Menon (Batch 2025, Roll 9) — same roll number.", time:"3d ago", read:true},
+];
+
+const JUNIORS = [
+  {name:"Ak", batch:2026, roll:9, type:"SAME_ROLL", lastActive:"Active today", questions:1},
+  {name:"Sanjay R.", batch:2026, roll:41, type:"SAME_ROLL", lastActive:"Active 2d ago", questions:0},
+  {name:"Meera K.", batch:2026, roll:87, type:"SAME_ROLL", lastActive:"Active 5h ago", questions:2},
+];
+
+const STREAK = {current:7, longest:14, thisMonth:5, resourcesShared:6, questionsAnswered:9};
+const CAL = Array.from({length:70},(_,i)=> (i%9===0?0: i%5===0?3:i%3===0?2:i%2===0?1:0));
+
+const ADMIN_STATS = {students:229, seniors:114, batches:5, sameRoll:114, fallback:1, resources:186, contributions:412, pending:6};
+
+const ASSIGNMENTS = [
+  {junior:"Ak", jRoll:9, senior:"Priya Menon", sRoll:9, type:"SAME_ROLL"},
+  {junior:"Student #112", jRoll:112, senior:"Senior #112", sRoll:112, type:"SAME_ROLL"},
+  {junior:"Student #113", jRoll:113, senior:"Senior #113", sRoll:113, type:"SAME_ROLL"},
+  {junior:"Student #114", jRoll:114, senior:"Senior #114", sRoll:114, type:"SAME_ROLL"},
+  {junior:"Student #115", jRoll:115, senior:"Rahul Iyer (Top Performer)", sRoll:"—", type:"FALLBACK_TOP_PERFORMER"},
+];
+
+const BATCHES = [
+  {year:2026, program:"MCA", branch:"Computer Applications", students:115, status:"Active"},
+  {year:2025, program:"MCA", branch:"Computer Applications", students:114, status:"Active"},
+  {year:2024, program:"MCA", branch:"Computer Applications", students:108, status:"Active"},
+  {year:2023, program:"MCA", branch:"Computer Applications", students:96, status:"Alumni"},
+  {year:2022, program:"MCA", branch:"Computer Applications", students:89, status:"Alumni"},
+];
+
+const MODERATION = [
+  {type:"Resource", title:"\"Guaranteed Placement Hack\" — flagged as misleading", reporter:"2 students", },
+  {type:"Question", title:"Off-topic question flagged in Q&A", reporter:"1 student"},
+  {type:"Chat message", title:"Reported message in a Corres conversation", reporter:"1 student"},
+];
+
+/* ============================= SHARED UI ============================= */
+function Badge({tone="slate", icon, children}){
+  return <span className={"badge badge-"+tone}>{icon && <Icon name={icon}/>}{children}</span>;
+}
+function Empty({icon="book", title, body}){
+  return <div className="empty"><Icon name={icon}/><div className="empty-title">{title}</div><div>{body}</div></div>;
+}
+function PageHead({eyebrow, title, subhead, action}){
+  return (
+    <div className="page-head">
+      <div>
+        {eyebrow && <div className="eyebrow">{eyebrow}</div>}
+        <h1>{title}</h1>
+        {subhead && <div className="subhead">{subhead}</div>}
+      </div>
+      {action}
+    </div>
+  );
+}
+function StatCard({num, label}){
+  return <div className="stat-card"><div className="stat-num">{num}</div><div className="stat-label">{label}</div></div>;
+}
+function Avatar({initials, size=40, tone}){
+  const style = {width:size, height:size, borderRadius: size>44?14:"50%", fontSize:size*0.36};
+  return <div className="avatar" style={{...style, background: tone||"var(--brass-100)", color: tone?"#fff":"var(--brass-600)"}}>{initials}</div>;
+}
+function AssignmentBadge({type}){
+  return type==="SAME_ROLL"
+    ? <Badge tone="sage" icon="check">Same Roll Number</Badge>
+    : <Badge tone="brass" icon="star">Top Performer Fallback</Badge>;
+}
+function ResIcon({type}){
+  const n = type==="link" ? "branch" : type==="image" ? "star" : "book";
+  return <div className="res-icon"><Icon name={n}/></div>;
+}
+
+/* ============================= NAV CONFIG ============================= */
+const NAV = {
+  student: [
+    {key:"dashboard", label:"Dashboard", icon:"home"},
+    {key:"corres", label:"My Corres", icon:"users"},
+    {key:"resources", label:"Resources", icon:"book"},
+    {key:"qa", label:"Q&A", icon:"help"},
+    {key:"chat", label:"Chat", icon:"message"},
+    {key:"lineage", label:"Generational History", icon:"layers"},
+    {key:"saved", label:"Saved Resources", icon:"bookmark"},
+    {key:"notifications", label:"Notifications", icon:"bell"},
+    {key:"profile", label:"Profile", icon:"user"},
+  ],
+  senior: [
+    {key:"dashboard", label:"Dashboard", icon:"home"},
+    {key:"juniors", label:"My Juniors", icon:"users"},
+    {key:"resources", label:"Resources", icon:"book"},
+    {key:"qa", label:"Q&A", icon:"help"},
+    {key:"chat", label:"Chat", icon:"message"},
+    {key:"contributions", label:"Contributions", icon:"flame"},
+    {key:"notifications", label:"Notifications", icon:"bell"},
+    {key:"profile", label:"Profile", icon:"user"},
+  ],
+  admin: [
+    {key:"dashboard", label:"Dashboard", icon:"home"},
+    {key:"users", label:"Users", icon:"users"},
+    {key:"batches", label:"Batches", icon:"layers"},
+    {key:"assignments", label:"Corres Assignments", icon:"branch"},
+    {key:"resources", label:"Resources", icon:"book"},
+    {key:"moderation", label:"Moderation", icon:"shield"},
+  ],
+};
+const TITLES = {
+  dashboard:"Dashboard", corres:"My Corres", resources:"Resource Directory", resourceDetail:"Resource",
+  upload:"Upload Resource", qa:"Q&A", question:"Question", chat:"Chat", lineage:"Generational History",
+  saved:"Saved Resources", notifications:"Notifications", profile:"Profile", juniors:"My Juniors",
+  contributions:"Contributions", users:"Users", batches:"Batches", assignments:"Corres Assignment Management",
+  moderation:"Moderation",
+};
+
+/* ============================= SCREENS: AUTH ============================= */
+function LoginScreen({onLogin, goRegister}){
+  return (
+    <div className="auth-shell">
+      <div className="auth-visual">
+        <div style={{display:"flex", alignItems:"center", gap:10}}>
+          <div className="brand-mark">C</div>
+          <div style={{fontFamily:"var(--font-d)", fontSize:20, fontWeight:600}}>Corres</div>
+        </div>
+        <div style={{maxWidth:420}}>
+          <h1 style={{color:"#fff", fontSize:34, lineHeight:1.2, marginBottom:14}}>What one generation learns should not be lost when it graduates.</h1>
+          <p style={{color:"#B9C6D8", fontSize:15, lineHeight:1.6}}>Every student is automatically matched with the senior who sat in their exact seat — same roll number, previous batch — so nothing has to be rediscovered from scratch.</p>
+          <div style={{marginTop:26}}>
+            {GENERATIONS.slice(0,4).map((g,i)=>(
+              <div className="gen-line" key={i}><span className="gen-dot"/>{g.batch} · Roll 09 · {g.you?"You":g.label}</div>
+            ))}
+          </div>
+        </div>
+        <div style={{color:"#7C8AA0", fontSize:12.5}}>VIT Vellore · MCA · Computer Applications</div>
+      </div>
+      <div className="auth-form-side">
+        <div className="auth-box">
+          <h2 style={{fontSize:24, marginBottom:6}}>Welcome back</h2>
+          <p className="subhead" style={{marginBottom:24}}>Log in to see your assigned Corres and knowledge feed.</p>
+          <div className="field"><label>College email</label><input className="input" defaultValue="ak@vitstudent.ac.in"/></div>
+          <div className="field"><label>Password</label><input className="input" type="password" defaultValue="••••••••"/></div>
+          <button className="btn btn-primary" style={{width:"100%", justifyContent:"center", marginTop:6}} onClick={onLogin}>Log in</button>
+          <div style={{textAlign:"center", marginTop:16, fontSize:13.5, color:"var(--text-600)"}}>
+            New here? <a onClick={goRegister} style={{color:"var(--ink-900)", fontWeight:600, cursor:"pointer"}}>Create an account</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingScreen({onDone}){
+  const [step, setStep] = useState(0);
+  const steps = ["Account","Academic profile","Corres assignment"];
+  return (
+    <div className="auth-shell">
+      <div className="auth-visual">
+        <div style={{display:"flex", alignItems:"center", gap:10}}>
+          <div className="brand-mark">C</div>
+          <div style={{fontFamily:"var(--font-d)", fontSize:20, fontWeight:600}}>Corres</div>
+        </div>
+        <div>
+          {steps.map((s,i)=>(
+            <div key={i} style={{display:"flex", alignItems:"center", gap:12, padding:"10px 0", color: i<=step? "#fff":"#647587"}}>
+              <div style={{width:26,height:26,borderRadius:"50%", border:"1.5px solid currentColor", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, flexShrink:0, background: i<step?"var(--brass-500)":"transparent", borderColor: i<step?"var(--brass-500)":"currentColor"}}>
+                {i<step ? <Icon name="check2" className="icon" style={{width:13,height:13}}/> : i+1}
+              </div>
+              <span style={{fontSize:15, fontWeight:600}}>{s}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{color:"#7C8AA0", fontSize:12.5}}>Step {step+1} of {steps.length}</div>
+      </div>
+      <div className="auth-form-side">
+        <div className="auth-box">
+          {step===0 && <>
+            <h2 style={{fontSize:24, marginBottom:6}}>Create your account</h2>
+            <p className="subhead" style={{marginBottom:22}}>Use your college email to get verified faster.</p>
+            <div className="field"><label>Full name</label><input className="input" defaultValue="Ak"/></div>
+            <div className="field"><label>College email</label><input className="input" defaultValue="ak@vitstudent.ac.in"/></div>
+            <div className="field"><label>Password</label><input className="input" type="password" defaultValue="••••••••"/></div>
+            <button className="btn btn-primary" style={{width:"100%", justifyContent:"center"}} onClick={()=>setStep(1)}>Continue</button>
+          </>}
+          {step===1 && <>
+            <h2 style={{fontSize:24, marginBottom:6}}>Academic profile</h2>
+            <p className="subhead" style={{marginBottom:22}}>This determines your automatic Corres match.</p>
+            <div className="field"><label>College</label><input className="input" defaultValue="VIT Vellore"/></div>
+            <div className="grid grid-2">
+              <div className="field"><label>Program</label><input className="input" defaultValue="MCA"/></div>
+              <div className="field"><label>Branch</label><input className="input" defaultValue="Computer Applications"/></div>
+            </div>
+            <div className="grid grid-2">
+              <div className="field"><label>Batch year</label><input className="input" defaultValue="2026"/></div>
+              <div className="field"><label>Roll number</label><input className="input" defaultValue="09"/></div>
+            </div>
+            <button className="btn btn-primary" style={{width:"100%", justifyContent:"center"}} onClick={()=>setStep(2)}>Continue</button>
+          </>}
+          {step===2 && <>
+            <h2 style={{fontSize:24, marginBottom:6}}>Corres assigned</h2>
+            <p className="subhead" style={{marginBottom:20}}>We matched batch 2026 / roll 09 against batch 2025.</p>
+            <div className="card" style={{borderLeft:"4px solid var(--sage-500)", marginBottom:18}}>
+              <div style={{display:"flex", gap:12, alignItems:"center"}}>
+                <Avatar initials="PM" size={48} tone="var(--ink-900)"/>
+                <div>
+                  <div style={{fontWeight:700}}>Priya Menon</div>
+                  <div className="subhead" style={{marginTop:2}}>Batch 2025 · Roll 09</div>
+                </div>
+              </div>
+              <div style={{marginTop:12}}><AssignmentBadge type="SAME_ROLL"/></div>
+              <p style={{marginTop:10, fontSize:13.5, color:"var(--text-600)"}}>Same roll number found in the previous batch — Priya is now your Corres for the rest of your program.</p>
+            </div>
+            <button className="btn btn-primary" style={{width:"100%", justifyContent:"center"}} onClick={onDone}>Go to my dashboard</button>
+          </>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================= STUDENT SCREENS ============================= */
+function StudentDashboard({nav}){
+  return (
+    <div>
+      <PageHead eyebrow="Good to see you, Ak" title="Dashboard" subhead="Everything preserved for you by the generations before you, in one place."/>
+      <div className="grid grid-2" style={{marginBottom:20, alignItems:"stretch"}}>
+        <div className="corres-card">
+          <div className="corres-card-top">
+            <Avatar initials={CORRES.initials} size={58} tone="var(--ink-900)"/>
+            <div style={{flex:1}}>
+              <div style={{display:"flex", justifyContent:"space-between", gap:8}}>
+                <div>
+                  <div className="eyebrow" style={{marginBottom:2}}>Your assigned Corres</div>
+                  <div style={{fontWeight:700, fontSize:17}}>{CORRES.name}</div>
+                </div>
+                <span style={{width:8,height:8,borderRadius:"50%", background:"var(--sage-500)", marginTop:6}}/>
+              </div>
+              <div className="subhead" style={{marginTop:4}}>Batch {CORRES.batch} · Roll {CORRES.roll}</div>
+              <div style={{marginTop:10}}><AssignmentBadge type={CORRES.type}/></div>
+            </div>
+          </div>
+          <div className="corres-card-foot">
+            <button onClick={()=>nav("chat")}><Icon name="message"/>Message</button>
+            <button onClick={()=>nav("corres")}><Icon name="chevronRight"/>View profile</button>
+          </div>
+        </div>
+        <div className="card">
+          <div className="eyebrow" style={{marginBottom:10}}>Generational History</div>
+          <div className="lineage" style={{paddingLeft:24}}>
+            {GENERATIONS.slice(0,3).map((g,i)=>(
+              <div className={"lineage-node "+(g.you?"you":"")} key={i} style={{paddingBottom: i===2?0:16}}>
+                <div style={{fontSize:13.5, fontWeight:600}}>{g.batch} · Roll {g.roll}{g.you?" · You":""}</div>
+                {!g.you && <div style={{fontSize:12.5, color:"var(--text-600)"}}>{g.label} · {g.resources} resources shared</div>}
+              </div>
+            ))}
+          </div>
+          <button className="btn btn-ghost btn-sm" style={{marginTop:6}} onClick={()=>nav("lineage")}>See full lineage <Icon name="chevronRight"/></button>
+        </div>
+      </div>
+
+      <div className="grid grid-2" style={{marginBottom:20}}>
+        <div className="card">
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+            <h3 style={{fontSize:16}}>Recent resources</h3>
+            <button className="btn btn-ghost btn-sm" onClick={()=>nav("resources")}>Browse all</button>
+          </div>
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {RESOURCES.slice(0,3).map(r=>(
+              <div key={r.id} style={{display:"flex", gap:10, alignItems:"center"}}>
+                <ResIcon type={r.type}/>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:13.5, fontWeight:600, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{r.title}</div>
+                  <div style={{fontSize:12, color:"var(--text-600)"}}>{r.contributor} · Batch {r.batch}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+            <h3 style={{fontSize:16}}>Recent Q&A</h3>
+            <button className="btn btn-ghost btn-sm" onClick={()=>nav("qa")}>View all</button>
+          </div>
+          <div style={{display:"flex", flexDirection:"column", gap:12}}>
+            {QUESTIONS.slice(0,2).map(q=>(
+              <div key={q.id}>
+                <div style={{fontSize:13.5, fontWeight:600}}>{q.title}</div>
+                <div style={{fontSize:12, color:"var(--text-600)", marginTop:2}}>{q.answers} answer{q.answers!==1?"s":""} · {q.time}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="card">
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+          <h3 style={{fontSize:16}}>Notifications</h3>
+          <button className="btn btn-ghost btn-sm" onClick={()=>nav("notifications")}>View all</button>
+        </div>
+        {NOTIFICATIONS.slice(0,2).map(n=>(
+          <div className="notif-item" key={n.id}>
+            <div className="notif-ic" style={{background:"var(--"+n.tone+"-100)", color:"var(--"+n.tone+"-500)"}}><Icon name={n.icon}/></div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13.5, fontWeight:600}}>{n.title}</div>
+              <div style={{fontSize:12.5, color:"var(--text-600)"}}>{n.body}</div>
+            </div>
+            <div className="notif-time">{n.time}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MyCorresScreen(){
+  return (
+    <div>
+      <PageHead title="My Corres" subhead="Automatically matched by roll number from the previous batch."/>
+      <div className="corres-card" style={{maxWidth:640}}>
+        <div className="corres-card-top">
+          <Avatar initials={CORRES.initials} size={64} tone="var(--ink-900)"/>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:700, fontSize:19}}>{CORRES.name}</div>
+            <div className="subhead" style={{marginTop:2}}>Batch {CORRES.batch} · Roll {CORRES.roll} · {CORRES.headline}</div>
+            <div style={{marginTop:12, display:"flex", gap:8}}><AssignmentBadge type={CORRES.type}/><Badge tone="slate">Online</Badge></div>
+          </div>
+        </div>
+        <div className="corres-card-foot">
+          <button className="btn-ghost"><Icon name="message"/>Message</button>
+          <button className="btn-ghost"><Icon name="book"/>Their resources</button>
+        </div>
+      </div>
+
+      <div className="hint-banner" style={{marginTop:22, maxWidth:640}}>
+        <Icon name="branch" style={{marginTop:2}}/>
+        <div><b>How this match was made</b>Your roll number, 09, exists in batch 2025 — so you were matched directly with that student rather than a fallback top performer.</div>
+      </div>
+
+      <div className="card" style={{marginTop:22, maxWidth:640}}>
+        <h3 style={{fontSize:16, marginBottom:12}}>Contributed by {CORRES.name}</h3>
+        <div className="grid grid-2">
+          {RESOURCES.filter(r=>r.contributor===CORRES.name).map(r=>(
+            <div className="res-card" key={r.id}>
+              <div className="res-top"><ResIcon type={r.type}/><Badge tone="slate">{r.category}</Badge></div>
+              <div className="res-title">{r.title}</div>
+              <div className="res-meta">{r.subject} · {r.date}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResourceDirectory({nav, saved, toggleSave}){
+  const [cat, setCat] = useState("All");
+  const [q, setQ] = useState("");
+  const filtered = RESOURCES.filter(r=> (cat==="All"||r.category===cat) && r.title.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div>
+      <PageHead title="Resource Directory" subhead="Study material, notes, advice and plans preserved across every generation." action={<button className="btn btn-primary" onClick={()=>nav("upload")}><Icon name="upload"/>Add resource</button>}/>
+      <div className="search-bar" style={{marginBottom:14}}>
+        <Icon name="search"/><input placeholder="Search resources, subjects, tags..." value={q} onChange={e=>setQ(e.target.value)}/>
+      </div>
+      <div style={{display:"flex", gap:8, overflowX:"auto", paddingBottom:12, marginBottom:8}}>
+        <button className={"chip "+(cat==="All"?"active":"")} onClick={()=>setCat("All")}>All categories</button>
+        {CATEGORIES.map(c=>(<button key={c} className={"chip "+(cat===c?"active":"")} onClick={()=>setCat(c)}>{c}</button>))}
+      </div>
+      {filtered.length===0 ? (
+        <Empty icon="book" title="No knowledge has been contributed here yet." body="Try a different category or search term."/>
+      ) : (
+        <div className="grid grid-3">
+          {filtered.map(r=>(
+            <div className="res-card" key={r.id}>
+              <div className="res-top">
+                <ResIcon type={r.type}/>
+                <button className="icon-btn" style={{width:30,height:30}} onClick={()=>toggleSave(r.id)}>
+                  <Icon name="bookmark" className={saved.includes(r.id)?"":""} style={{color: saved.includes(r.id)?"var(--brass-500)":"var(--text-400)"}}/>
+                </button>
+              </div>
+              <div className="res-title" onClick={()=>nav("resourceDetail", r)} style={{cursor:"pointer"}}>{r.title}</div>
+              <div className="res-meta">{r.contributor} · Batch {r.batch} · {r.date}</div>
+              <div className="res-tags">{r.tags.map(t=><span className="tag" key={t}>{t}</span>)}</div>
+              <div className="res-actions">
+                <button className="btn btn-ghost btn-sm" onClick={()=>nav("resourceDetail", r)}>View</button>
+                <button className="btn btn-primary btn-sm"><Icon name="download"/>Download</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResourceDetailScreen({resource, nav, saved, toggleSave}){
+  const r = resource || RESOURCES[0];
+  return (
+    <div>
+      <button className="btn btn-ghost btn-sm" style={{marginBottom:16}} onClick={()=>nav("resources")}>← Back to directory</button>
+      <div className="card" style={{maxWidth:760}}>
+        <div style={{display:"flex", justifyContent:"space-between", gap:16, alignItems:"flex-start"}}>
+          <div>
+            <Badge tone="slate">{r.category}</Badge>
+            <h2 style={{fontSize:23, marginTop:10}}>{r.title}</h2>
+            <div className="subhead" style={{marginTop:6}}>Contributed by {r.contributor} · Batch {r.batch} · {r.date} · Subject: {r.subject}</div>
+          </div>
+          <ResIcon type={r.type}/>
+        </div>
+        <div className="res-tags" style={{marginTop:14}}>{r.tags.map(t=><span className="tag" key={t}>{t}</span>)}</div>
+        <div className="divider"/>
+        <p style={{fontSize:14.5, color:"var(--text-600)", lineHeight:1.7}}>
+          This resource was preserved from batch {r.batch} so future students preparing for {r.subject} don't have to start from scratch. It has been reviewed and organised as part of the {r.category.toLowerCase()} collection.
+        </p>
+        <div style={{display:"flex", gap:10, marginTop:18}}>
+          <button className="btn btn-primary"><Icon name="download"/>Download</button>
+          <button className="btn btn-ghost" onClick={()=>toggleSave(r.id)}><Icon name="bookmark"/>{saved.includes(r.id)?"Saved":"Save"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UploadResourceScreen({nav, role}){
+  const [uploading, setUploading] = useState(false);
+  const [done, setDone] = useState(false);
+  const submit = ()=>{ setUploading(true); setTimeout(()=>{setUploading(false); setDone(true);}, 1100); };
+  return (
+    <div>
+      <PageHead title="Upload Resource" subhead="Share something the next batch will thank you for."/>
+      <div className="card" style={{maxWidth:640}}>
+        {done ? (
+          <div style={{textAlign:"center", padding:"20px 10px"}}>
+            <div style={{width:52,height:52,borderRadius:"50%", background:"var(--sage-100)", color:"var(--sage-500)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px"}}><Icon name="check2" style={{width:24,height:24}}/></div>
+            <h3 style={{fontSize:18, marginBottom:6}}>Resource published</h3>
+            <p className="subhead" style={{marginBottom:18}}>It's now visible to every future batch searching {`"DBMS"`} or browsing Notes.</p>
+            <button className="btn btn-primary" onClick={()=>nav(role==="senior"?"dashboard":"resources")}>Done</button>
+          </div>
+        ) : (
+          <>
+            <div className="field"><label>Title</label><input className="input" placeholder="e.g. DBMS Complete Notes — Unit 1 to 5"/></div>
+            <div className="grid grid-2">
+              <div className="field"><label>Category</label><select className="input"><option>Notes</option><option>Study Material</option><option>Placement Resources</option><option>Interview Experiences</option><option>Advice</option><option>Timetables</option><option>Study Plans</option></select></div>
+              <div className="field"><label>Subject</label><input className="input" placeholder="e.g. DBMS"/></div>
+            </div>
+            <div className="field"><label>Tags</label><input className="input" placeholder="DBMS, CAT-2, Exam"/></div>
+            <div className="field">
+              <label>File</label>
+              <div style={{border:"1.5px dashed var(--border)", borderRadius:12, padding:"26px 16px", textAlign:"center", color:"var(--text-600)"}}>
+                <Icon name="upload" style={{width:22,height:22, marginBottom:6}}/>
+                <div style={{fontSize:13.5}}>Drop a PDF, image or document, or click to browse</div>
+              </div>
+            </div>
+            {uploading && <div style={{marginBottom:14}}><div className="skeleton" style={{height:8, width:"100%"}}/><div style={{fontSize:12, color:"var(--text-600)", marginTop:6}}>Uploading to knowledge repository…</div></div>}
+            <button className="btn btn-primary" style={{width:"100%", justifyContent:"center"}} onClick={submit} disabled={uploading}>{uploading?"Publishing…":"Publish resource"}</button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QAScreen({nav}){
+  const [tab, setTab] = useState("all");
+  const list = tab==="mine" ? QUESTIONS.filter(q=>q.asker==="You") : tab==="unanswered" ? QUESTIONS.filter(q=>q.answers===0) : QUESTIONS;
+  return (
+    <div>
+      <PageHead title="Q&A" subhead="Permanent institutional answers, not disappearing chat threads." action={<button className="btn btn-primary"><Icon name="plus"/>Ask a question</button>}/>
+      <div className="tab-row">
+        <button className={"tab-btn "+(tab==="all"?"active":"")} onClick={()=>setTab("all")}>All questions</button>
+        <button className={"tab-btn "+(tab==="mine"?"active":"")} onClick={()=>setTab("mine")}>My questions</button>
+        <button className={"tab-btn "+(tab==="unanswered"?"active":"")} onClick={()=>setTab("unanswered")}>Unanswered</button>
+      </div>
+      {list.length===0 ? <Empty icon="help" title="Nothing here yet" body="Try a different tab."/> : (
+        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+          {list.map(q=>(
+            <div className="q-card" key={q.id} onClick={()=>nav("question", q)}>
+              <div className="q-stat"><b>{q.answers}</b><span>Answers</span></div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:600, fontSize:14.5}}>{q.title}</div>
+                <div style={{fontSize:12.5, color:"var(--text-600)", marginTop:4}}>{q.subject} · asked by {q.asker} · {q.time}</div>
+              </div>
+              {q.accepted && <Badge tone="sage" icon="check">Answered</Badge>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuestionDetailScreen({question, nav}){
+  const q = question || QUESTIONS[0];
+  const [draft, setDraft] = useState("");
+  return (
+    <div>
+      <button className="btn btn-ghost btn-sm" style={{marginBottom:16}} onClick={()=>nav("qa")}>← Back to Q&A</button>
+      <div className="card" style={{maxWidth:720, marginBottom:18}}>
+        <Badge tone="slate">{q.subject}</Badge>
+        <h2 style={{fontSize:21, marginTop:10}}>{q.title}</h2>
+        <div className="subhead" style={{marginTop:6}}>Asked by {q.asker} · {q.time}</div>
+        {q.body && <p style={{marginTop:14, fontSize:14.5, lineHeight:1.7, color:"var(--text-900)"}}>{q.body}</p>}
+      </div>
+      <h3 style={{fontSize:16, marginBottom:12}}>{q.answers} Answer{q.answers!==1?"s":""}</h3>
+      <div style={{display:"flex", flexDirection:"column", gap:12, maxWidth:720}}>
+        {(q.answersList||[]).map((a,i)=>(
+          <div className={"answer-box "+(a.accepted?"accepted":"")} key={i}>
+            <div style={{display:"flex", justifyContent:"space-between", marginBottom:8}}>
+              <div style={{display:"flex", gap:8, alignItems:"center"}}><Avatar initials={a.author.split(" ").map(s=>s[0]).join("")} size={30}/><b style={{fontSize:13.5}}>{a.author}</b><span style={{fontSize:12, color:"var(--text-600)"}}>· Batch {a.batch}</span></div>
+              {a.accepted && <Badge tone="sage" icon="check">Accepted</Badge>}
+            </div>
+            <p style={{fontSize:14, lineHeight:1.6}}>{a.content}</p>
+          </div>
+        ))}
+      </div>
+      <div className="card" style={{marginTop:18, maxWidth:720}}>
+        <div className="field"><label>Add an answer</label><textarea className="ta" rows="3" placeholder="Share what worked for you..." value={draft} onChange={e=>setDraft(e.target.value)}/></div>
+        <button className="btn btn-primary">Post answer</button>
+      </div>
+    </div>
+  );
+}
+
+function ChatScreen(){
+  const [activeId, setActiveId] = useState(CONVERSATIONS[0].id);
+  const [msgsById, setMsgsById] = useState(()=>Object.fromEntries(CONVERSATIONS.map(c=>[c.id,c.messages])));
+  const [draft, setDraft] = useState("");
+  const [typing, setTyping] = useState(false);
+  const active = CONVERSATIONS.find(c=>c.id===activeId);
+  const bodyRef = useRef(null);
+  useEffect(()=>{ if(bodyRef.current) bodyRef.current.scrollTop = bodyRef.current.scrollHeight; },[msgsById, typing, activeId]);
+  const send = ()=>{
+    if(!draft.trim()) return;
+    setMsgsById(m=>({...m, [activeId]:[...m[activeId], {me:true, text:draft, time:"now"}]}));
+    setDraft("");
+    setTyping(true);
+    setTimeout(()=>{
+      setTyping(false);
+      setMsgsById(m=>({...m, [activeId]:[...m[activeId], {me:false, text:"Got it — will get back to you shortly.", time:"now"}]}));
+    }, 1400);
+  };
+  return (
+    <div>
+      <PageHead title="Chat" subhead="Direct line to your assigned Corres."/>
+      <div className="chat-shell">
+        <div className="conv-list">
+          {CONVERSATIONS.map(c=>(
+            <div className={"conv-item "+(c.id===activeId?"active":"")} key={c.id} onClick={()=>setActiveId(c.id)} style={{cursor:"pointer"}}>
+              <Avatar initials={c.name.split(" ").map(s=>s[0]).join("")} size={40} tone="var(--ink-900)"/>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{display:"flex", justifyContent:"space-between"}}><span className="conv-name">{c.name}</span><span style={{fontSize:11, color:"var(--text-400)"}}>{c.time}</span></div>
+                <div className="conv-preview">{c.last}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="chat-window">
+          <div className="chat-head">
+            <Avatar initials={active.name.split(" ").map(s=>s[0]).join("")} size={38} tone="var(--ink-900)"/>
+            <div><div style={{fontWeight:700, fontSize:14.5}}>{active.name}</div><div style={{fontSize:12, color:"var(--text-600)"}}>{active.role}</div></div>
+          </div>
+          <div className="chat-body" ref={bodyRef}>
+            {msgsById[activeId].length===0 ? <Empty icon="message" title="Start a conversation with your Corres." body="Say hello — they were assigned to help."/> :
+              msgsById[activeId].map((m,i)=>(
+                <div key={i} className={"bubble "+(m.me?"me":"them")}>{m.text}<div className="bubble-time">{m.time}</div></div>
+              ))}
+            {typing && <div className="typing-row">{active.name.split(" ")[0]} is typing…</div>}
+          </div>
+          <div className="chat-input">
+            <input placeholder="Type a message..." value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()}/>
+            <button className="btn btn-primary" style={{borderRadius:99, width:42, height:42, padding:0, justifyContent:"center"}} onClick={send}><Icon name="send"/></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LineageScreen(){
+  const [sel, setSel] = useState(1);
+  const g = GENERATIONS[sel];
+  return (
+    <div>
+      <PageHead title="Generational History" subhead="Your academic lineage — same seat, five generations of students."/>
+      <div className="grid grid-2" style={{alignItems:"start"}}>
+        <div className="card">
+          <div className="lineage">
+            {GENERATIONS.map((gen,i)=>(
+              <div key={i} className={"lineage-node "+(gen.you?"you":"")+(i===sel?" selected":"")} onClick={()=>setSel(i)}>
+                <div className="lineage-card">
+                  <div style={{display:"flex", justifyContent:"space-between"}}>
+                    <b style={{fontSize:14}}>{gen.batch} · Roll {gen.roll}</b>
+                    {gen.you && <Badge tone="brass">You</Badge>}
+                  </div>
+                  <div style={{fontSize:13, color:"var(--text-600)", marginTop:2}}>{gen.label}{gen.role?` · ${gen.role}`:""}</div>
+                  {!gen.you && <div style={{fontSize:12, color:"var(--text-400)", marginTop:4}}>{gen.contributions} contributions · {gen.resources} resources</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          {g.you ? (
+            <Empty icon="layers" title="This is you" body="Your contributions will appear here once you start sharing knowledge with the batches that follow."/>
+          ) : (
+            <>
+              <div style={{display:"flex", gap:12, alignItems:"center", marginBottom:14}}>
+                <Avatar initials={g.label.split(" ").map(s=>s[0]).join("")} size={48} tone="var(--ink-900)"/>
+                <div><b style={{fontSize:16}}>{g.label}</b><div className="subhead">Batch {g.batch} · Roll {g.roll}</div></div>
+              </div>
+              <div className="grid grid-3" style={{marginBottom:16}}>
+                <StatCard num={g.contributions} label="Contributions"/>
+                <StatCard num={g.resources} label="Resources"/>
+                <StatCard num={g.you?0:"3"} label="Answers given"/>
+              </div>
+              <h4 style={{fontSize:14, marginBottom:10}}>Resources shared</h4>
+              <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                {RESOURCES.filter(r=>r.batch===g.batch).slice(0,3).map(r=>(
+                  <div key={r.id} style={{display:"flex", gap:10, alignItems:"center"}}><ResIcon type={r.type}/><div style={{fontSize:13.5, fontWeight:600}}>{r.title}</div></div>
+                ))}
+                {RESOURCES.filter(r=>r.batch===g.batch).length===0 && <div style={{fontSize:13, color:"var(--text-600)"}}>Previous batch data is not available yet.</div>}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SavedResourcesScreen({saved, nav, toggleSave}){
+  const list = RESOURCES.filter(r=>saved.includes(r.id));
+  return (
+    <div>
+      <PageHead title="Saved Resources" subhead="Your personal shortlist from the knowledge repository."/>
+      {list.length===0 ? <Empty icon="bookmark" title="Nothing saved yet" body="Bookmark resources from the directory to find them here later."/> : (
+        <div className="grid grid-3">
+          {list.map(r=>(
+            <div className="res-card" key={r.id}>
+              <div className="res-top"><ResIcon type={r.type}/><button className="icon-btn" style={{width:30,height:30}} onClick={()=>toggleSave(r.id)}><Icon name="bookmark" style={{color:"var(--brass-500)"}}/></button></div>
+              <div className="res-title">{r.title}</div>
+              <div className="res-meta">{r.contributor} · Batch {r.batch}</div>
+              <div className="res-actions"><button className="btn btn-ghost btn-sm" onClick={()=>nav("resourceDetail", r)}>View</button><button className="btn btn-primary btn-sm"><Icon name="download"/>Download</button></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotificationsScreen(){
+  return (
+    <div>
+      <PageHead title="Notifications" subhead="New messages, answers, resources and Corres activity." action={<button className="btn btn-ghost btn-sm">Mark all as read</button>}/>
+      <div className="card">
+        {NOTIFICATIONS.map(n=>(
+          <div className="notif-item" key={n.id} style={{opacity: n.read?0.65:1}}>
+            <div className="notif-ic" style={{background:"var(--"+n.tone+"-100)", color:"var(--"+n.tone+"-500)"}}><Icon name={n.icon}/></div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13.5, fontWeight:600}}>{n.title}</div>
+              <div style={{fontSize:12.5, color:"var(--text-600)"}}>{n.body}</div>
+            </div>
+            <div className="notif-time">{n.time}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfileScreen({role}){
+  return (
+    <div>
+      <PageHead title="Profile" subhead="Your academic identity on Corres."/>
+      <div className="grid grid-2" style={{alignItems:"start"}}>
+        <div className="card">
+          <div style={{display:"flex", gap:14, alignItems:"center", marginBottom:16}}>
+            <Avatar initials={ME.initials} size={64} tone="var(--ink-900)"/>
+            <div><h3 style={{fontSize:19}}>{ME.name}</h3><div className="subhead">{ME.program} · {ME.branch}</div></div>
+          </div>
+          <div className="field"><label>College</label><input className="input" defaultValue={ME.college} readOnly/></div>
+          <div className="grid grid-2">
+            <div className="field"><label>Batch</label><input className="input" defaultValue={ME.batch} readOnly/></div>
+            <div className="field"><label>Roll number</label><input className="input" defaultValue={ME.roll} readOnly/></div>
+          </div>
+          <div className="field"><label>Bio</label><textarea className="ta" rows="3" defaultValue="MCA student interested in backend systems and API design."/></div>
+          <button className="btn btn-primary">Save changes</button>
+        </div>
+        <div className="card">
+          <h4 style={{fontSize:14, marginBottom:12}}>{role==="senior"?"Contribution summary":"Activity summary"}</h4>
+          <div className="grid grid-2">
+            <StatCard num={role==="senior"?STREAK.resourcesShared:2} label="Resources saved"/>
+            <StatCard num={role==="senior"?STREAK.questionsAnswered:1} label={role==="senior"?"Questions answered":"Questions asked"}/>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================= SENIOR SCREENS ============================= */
+function SeniorDashboard({nav}){
+  return (
+    <div>
+      <PageHead eyebrow="Welcome back, Priya" title="Dashboard" subhead="Your knowledge is still helping students two generations behind you."/>
+      <div className="streak-band" style={{marginBottom:20}}>
+        <div className="streak-flame"><Icon name="flame" style={{width:24,height:24}}/></div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:20, fontFamily:"var(--font-d)", fontWeight:600}}>{STREAK.current} day contribution streak</div>
+          <div style={{fontSize:13, color:"#C7D2E0"}}>Longest streak: {STREAK.longest} days · {STREAK.thisMonth} contributions this month</div>
+        </div>
+        <button className="btn btn-brass" onClick={()=>nav("contributions")}>View details</button>
+      </div>
+
+      <div className="grid grid-2" style={{marginBottom:20}}>
+        <div className="card">
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+            <h3 style={{fontSize:16}}>Your juniors</h3>
+            <button className="btn btn-ghost btn-sm" onClick={()=>nav("juniors")}>View all</button>
+          </div>
+          {JUNIORS.map((j,i)=>(
+            <div key={i} style={{display:"flex", alignItems:"center", gap:10, padding:"8px 0", borderBottom: i<JUNIORS.length-1?"1px solid var(--border)":"none"}}>
+              <Avatar initials={j.name.split(" ").map(s=>s[0]).join("")} size={34}/>
+              <div style={{flex:1}}><div style={{fontSize:13.5, fontWeight:600}}>{j.name}</div><div style={{fontSize:12, color:"var(--text-600)"}}>Batch {j.batch} · Roll {j.roll}</div></div>
+              {j.questions>0 && <Badge tone="rust">{j.questions} new</Badge>}
+            </div>
+          ))}
+        </div>
+        <div className="card">
+          <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+            <h3 style={{fontSize:16}}>Recent questions from juniors</h3>
+            <button className="btn btn-ghost btn-sm" onClick={()=>nav("qa")}>View all</button>
+          </div>
+          {QUESTIONS.filter(q=>!q.accepted || q.answers<2).slice(0,2).map(q=>(
+            <div key={q.id} style={{marginBottom:12}}>
+              <div style={{fontSize:13.5, fontWeight:600}}>{q.title}</div>
+              <div style={{fontSize:12, color:"var(--text-600)", marginTop:2}}>{q.subject} · {q.time}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="card">
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
+          <h3 style={{fontSize:16}}>Contribute something</h3>
+        </div>
+        <div className="grid grid-4">
+          {[["upload","Add Resource"],["book","Upload Notes"],["help","Share Advice"],["layers","Add Timetable"]].map(([ic,label])=>(
+            <button key={label} className="btn btn-ghost" style={{flexDirection:"column", height:80, gap:6}} onClick={()=>nav("upload")}>
+              <Icon name={ic} style={{width:20,height:20}}/>{label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MyJuniorsScreen({nav}){
+  return (
+    <div>
+      <PageHead title="My Juniors" subhead="Students automatically matched to you as their Corres."/>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Junior</th><th>Roll</th><th>Assignment</th><th>Activity</th><th>Questions</th><th></th></tr></thead>
+          <tbody>
+            {JUNIORS.map((j,i)=>(
+              <tr key={i}>
+                <td><div style={{display:"flex", alignItems:"center", gap:9}}><Avatar initials={j.name.split(" ").map(s=>s[0]).join("")} size={30}/>{j.name}</div></td>
+                <td>{j.batch} / {j.roll}</td>
+                <td><AssignmentBadge type={j.type}/></td>
+                <td style={{color:"var(--text-600)"}}>{j.lastActive}</td>
+                <td>{j.questions>0 ? <Badge tone="rust">{j.questions}</Badge> : "—"}</td>
+                <td><button className="btn btn-ghost btn-sm" onClick={()=>nav("chat")}>Message</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function ContributionsScreen(){
+  return (
+    <div>
+      <PageHead title="Contributions" subhead="Consistency, not volume — a record of what you've passed on."/>
+      <div className="grid grid-4" style={{marginBottom:20}}>
+        <StatCard num={STREAK.current} label="Current streak"/>
+        <StatCard num={STREAK.longest} label="Longest streak"/>
+        <StatCard num={STREAK.resourcesShared} label="Resources shared"/>
+        <StatCard num={STREAK.questionsAnswered} label="Questions answered"/>
+      </div>
+      <div className="card" style={{marginBottom:20}}>
+        <h4 style={{fontSize:14, marginBottom:12}}>Contribution calendar</h4>
+        <div className="cal-grid">
+          {CAL.map((v,i)=>(<div key={i} className={"cal-cell "+(v>0?"l"+v:"")}/>))}
+        </div>
+        <div style={{display:"flex", gap:8, alignItems:"center", marginTop:10, fontSize:12, color:"var(--text-600)"}}>
+          Less <span className="cal-cell" style={{width:12,height:12}}/><span className="cal-cell l1" style={{width:12,height:12}}/><span className="cal-cell l2" style={{width:12,height:12}}/><span className="cal-cell l3" style={{width:12,height:12}}/> More
+        </div>
+      </div>
+      <div className="card">
+        <h4 style={{fontSize:14, marginBottom:12}}>Recent contribution history</h4>
+        {[["Added","DBMS Complete Notes — Unit 1 to 5","2d ago"],["Answered","How should I prepare for CAT-2?","2d ago"],["Added","MCA Placement Interview Experience","6d ago"],["Answered","Best approach for product company placements","9d ago"]].map((r,i)=>(
+          <div key={i} style={{display:"flex", justifyContent:"space-between", padding:"10px 0", borderBottom: i<3?"1px solid var(--border)":"none"}}>
+            <div style={{fontSize:13.5}}><b>{r[0]}</b> — {r[1]}</div>
+            <div style={{fontSize:12.5, color:"var(--text-600)"}}>{r[2]}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================= ADMIN SCREENS ============================= */
+function AdminDashboard(){
+  return (
+    <div>
+      <PageHead title="Admin Dashboard" subhead="Platform-wide view of users, assignments and contributions."/>
+      <div className="grid grid-4" style={{marginBottom:20}}>
+        <StatCard num={ADMIN_STATS.students} label="Total students"/>
+        <StatCard num={ADMIN_STATS.seniors} label="Total seniors"/>
+        <StatCard num={ADMIN_STATS.batches} label="Active batches"/>
+        <StatCard num={ADMIN_STATS.resources} label="Resources"/>
+      </div>
+      <div className="grid grid-2" style={{marginBottom:20}}>
+        <div className="card">
+          <h4 style={{fontSize:14, marginBottom:12}}>Corres assignments</h4>
+          <div style={{display:"flex", gap:20}}>
+            <div><div className="stat-num" style={{fontSize:24}}>{ADMIN_STATS.sameRoll}</div><div className="stat-label"><Badge tone="sage">Same Roll</Badge></div></div>
+            <div><div className="stat-num" style={{fontSize:24}}>{ADMIN_STATS.fallback}</div><div className="stat-label"><Badge tone="brass">Fallback</Badge></div></div>
+          </div>
+        </div>
+        <div className="card">
+          <h4 style={{fontSize:14, marginBottom:12}}>Moderation queue</h4>
+          <div style={{display:"flex", alignItems:"center", gap:10}}>
+            <div className="stat-num" style={{fontSize:24, color:"var(--rust-500)"}}>{ADMIN_STATS.pending}</div>
+            <div className="stat-label">items pending review</div>
+          </div>
+        </div>
+      </div>
+      <div className="card">
+        <h4 style={{fontSize:14, marginBottom:12}}>Contributions this month</h4>
+        <div className="stat-num" style={{fontSize:26}}>{ADMIN_STATS.contributions}</div>
+        <div className="stat-label">Across resources, notes, advice and answers</div>
+      </div>
+    </div>
+  );
+}
+
+function AdminUsersScreen(){
+  const rows = [
+    {name:"Ak", role:"STUDENT", batch:2026, status:"Active"},
+    {name:"Priya Menon", role:"SENIOR", batch:2025, status:"Active"},
+    {name:"Karthik Suresh", role:"ALUMNI", batch:2024, status:"Active"},
+    {name:"Divya Nair", role:"ALUMNI", batch:2023, status:"Pending verification"},
+    {name:"Rahul Iyer", role:"SENIOR", batch:2025, status:"Active"},
+  ];
+  return (
+    <div>
+      <PageHead title="Users" subhead="Manage students, seniors, alumni and administrators." action={<div className="search-bar" style={{width:240}}><Icon name="search"/><input placeholder="Search users"/></div>}/>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Batch</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {rows.map((u,i)=>(
+              <tr key={i}>
+                <td><div style={{display:"flex", alignItems:"center", gap:9}}><Avatar initials={u.name.split(" ").map(s=>s[0]).join("")} size={30}/>{u.name}</div></td>
+                <td><Badge tone="slate">{u.role}</Badge></td>
+                <td>{u.batch}</td>
+                <td>{u.status==="Active" ? <Badge tone="sage">Active</Badge> : <Badge tone="rust">{u.status}</Badge>}</td>
+                <td><button className="btn btn-ghost btn-sm">Manage</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AdminBatchesScreen(){
+  return (
+    <div>
+      <PageHead title="Batches" subhead="Program batches used for Corres assignment matching." action={<button className="btn btn-primary"><Icon name="plus"/>Add batch</button>}/>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Year</th><th>Program</th><th>Branch</th><th>Students</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            {BATCHES.map((b,i)=>(
+              <tr key={i}>
+                <td><b>{b.year}</b></td><td>{b.program}</td><td>{b.branch}</td><td>{b.students}</td>
+                <td><Badge tone={b.status==="Active"?"sage":"slate"}>{b.status}</Badge></td>
+                <td><button className="btn btn-ghost btn-sm">Edit</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AdminAssignmentsScreen(){
+  const [running, setRunning] = useState(false);
+  return (
+    <div>
+      <PageHead title="Corres Assignment Management" subhead="Batch 2026 → Batch 2025" action={<button className="btn btn-primary" onClick={()=>{setRunning(true); setTimeout(()=>setRunning(false),1200);}}><Icon name="branch"/>Run assignment</button>}/>
+      {running && <div className="hint-banner"><Icon name="clock"/><div><b>Running assignment engine…</b>Matching roll numbers across batch 2026 and batch 2025.</div></div>}
+      <div className="grid grid-2" style={{marginBottom:18}}>
+        <StatCard num={ADMIN_STATS.sameRoll} label="Same roll number matches"/>
+        <StatCard num={ADMIN_STATS.fallback} label="Top performer fallbacks"/>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead><tr><th>Junior</th><th>Roll</th><th>Assigned Corres</th><th>Senior Roll</th><th>Type</th></tr></thead>
+          <tbody>
+            {ASSIGNMENTS.map((a,i)=>(
+              <tr key={i}>
+                <td>{a.junior}</td><td>{a.jRoll}</td><td>{a.senior}</td><td>{a.sRoll}</td>
+                <td><AssignmentBadge type={a.type}/></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AdminModerationScreen(){
+  return (
+    <div>
+      <PageHead title="Moderation" subhead="Reported resources, questions and chat messages awaiting review."/>
+      {MODERATION.length===0 ? <Empty icon="shield" title="Queue is clear" body="Nothing needs review right now."/> : (
+        <div style={{display:"flex", flexDirection:"column", gap:12}}>
+          {MODERATION.map((m,i)=>(
+            <div className="card" key={i} style={{display:"flex", justifyContent:"space-between", alignItems:"center", gap:14}}>
+              <div><Badge tone="rust">{m.type}</Badge><div style={{fontWeight:600, fontSize:14, marginTop:8}}>{m.title}</div><div style={{fontSize:12.5, color:"var(--text-600)", marginTop:2}}>Reported by {m.reporter}</div></div>
+              <div style={{display:"flex", gap:8, flexShrink:0}}><button className="btn btn-ghost btn-sm">Dismiss</button><button className="btn btn-primary btn-sm">Remove</button></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================= APP SHELL ============================= */
+function Sidebar({role, screen, setScreen, setRole, mobileOpen, setMobileOpen}){
+  const items = NAV[role];
+  return (
+    <aside className={"sidebar "+(mobileOpen?"open":"")}>
+      <div className="brand">
+        <div className="brand-mark">C</div>
+        <div><div className="brand-name">Corres</div><div className="brand-sub">Knowledge across generations</div></div>
+      </div>
+      <div className="nav-list">
+        {items.map(it=>(
+          <button key={it.key} className={"nav-item "+(screen===it.key?"active":"")} onClick={()=>{setScreen(it.key); setMobileOpen(false);}}>
+            <Icon name={it.icon} className="nav-ic"/>{it.label}
+          </button>
+        ))}
+      </div>
+      <div className="sidebar-foot">
+        <div className="role-preview">
+          <div className="role-preview-label">Previewing as</div>
+          <div className="role-seg">
+            {["student","senior","admin"].map(r=>(
+              <button key={r} className={role===r?"active":""} onClick={()=>{setRole(r); setScreen("dashboard");}}>{r[0].toUpperCase()+r.slice(1)}</button>
+            ))}
+          </div>
+        </div>
+        <div className="user-chip">
+          <Avatar initials={role==="admin"?"AD":role==="senior"?"PM":"AK"} size={36}/>
+          <div><div className="user-chip-name">{role==="admin"?"Admin User":role==="senior"?"Priya Menon":"Ak"}</div><div className="user-chip-meta">{role==="admin"?"Administrator":role==="senior"?"Senior · Batch 2025":"Student · Batch 2026"}</div></div>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function App(){
+  const [phase, setPhase] = useState("login"); // login | onboarding | app
+  const [role, setRole] = useState("student");
+  const [screen, setScreen] = useState("dashboard");
+  const [screenData, setScreenData] = useState(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [saved, setSaved] = useState([1]);
+
+  const nav = (key, data)=>{ setScreen(key); setScreenData(data||null); window.scrollTo(0,0); };
+  const toggleSave = (id)=> setSaved(s=> s.includes(id) ? s.filter(x=>x!==id) : [...s, id]);
+
+  if(phase==="login") return <LoginScreen onLogin={()=>setPhase("app")} goRegister={()=>setPhase("onboarding")}/>;
+  if(phase==="onboarding") return <OnboardingScreen onDone={()=>{setPhase("app"); setScreen("dashboard");}}/>;
+
+  let body;
+  if(role==="student"){
+    if(screen==="dashboard") body = <StudentDashboard nav={nav}/>;
+    else if(screen==="corres") body = <MyCorresScreen/>;
+    else if(screen==="resources") body = <ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave}/>;
+    else if(screen==="resourceDetail") body = <ResourceDetailScreen resource={screenData} nav={nav} saved={saved} toggleSave={toggleSave}/>;
+    else if(screen==="upload") body = <UploadResourceScreen nav={nav} role={role}/>;
+    else if(screen==="qa") body = <QAScreen nav={nav}/>;
+    else if(screen==="question") body = <QuestionDetailScreen question={screenData} nav={nav}/>;
+    else if(screen==="chat") body = <ChatScreen/>;
+    else if(screen==="lineage") body = <LineageScreen/>;
+    else if(screen==="saved") body = <SavedResourcesScreen saved={saved} nav={nav} toggleSave={toggleSave}/>;
+    else if(screen==="notifications") body = <NotificationsScreen/>;
+    else if(screen==="profile") body = <ProfileScreen role={role}/>;
+  } else if(role==="senior"){
+    if(screen==="dashboard") body = <SeniorDashboard nav={nav}/>;
+    else if(screen==="juniors") body = <MyJuniorsScreen nav={nav}/>;
+    else if(screen==="resources") body = <ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave}/>;
+    else if(screen==="resourceDetail") body = <ResourceDetailScreen resource={screenData} nav={nav} saved={saved} toggleSave={toggleSave}/>;
+    else if(screen==="upload") body = <UploadResourceScreen nav={nav} role={role}/>;
+    else if(screen==="qa") body = <QAScreen nav={nav}/>;
+    else if(screen==="question") body = <QuestionDetailScreen question={screenData} nav={nav}/>;
+    else if(screen==="chat") body = <ChatScreen/>;
+    else if(screen==="contributions") body = <ContributionsScreen/>;
+    else if(screen==="notifications") body = <NotificationsScreen/>;
+    else if(screen==="profile") body = <ProfileScreen role={role}/>;
+  } else {
+    if(screen==="dashboard") body = <AdminDashboard/>;
+    else if(screen==="users") body = <AdminUsersScreen/>;
+    else if(screen==="batches") body = <AdminBatchesScreen/>;
+    else if(screen==="assignments") body = <AdminAssignmentsScreen/>;
+    else if(screen==="resources") body = <ResourceDirectory nav={nav} saved={saved} toggleSave={toggleSave}/>;
+    else if(screen==="resourceDetail") body = <ResourceDetailScreen resource={screenData} nav={nav} saved={saved} toggleSave={toggleSave}/>;
+    else if(screen==="moderation") body = <AdminModerationScreen/>;
+  }
+  if(!body) body = role==="student"?<StudentDashboard nav={nav}/>: role==="senior"?<SeniorDashboard nav={nav}/>:<AdminDashboard/>;
+
+  const mobileNavItems = NAV[role].slice(0,5);
+
+  return (
+    <div className="app-shell">
+      <Sidebar role={role} screen={screen} setScreen={(k)=>nav(k)} setRole={setRole} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen}/>
+      <div className="main-col">
+        <div className="topbar">
+          <div style={{display:"flex", alignItems:"center", gap:12}}>
+            <button className="icon-btn menu-btn" onClick={()=>setMobileOpen(true)}><Icon name="menu"/></button>
+            <div className="topbar-title">{TITLES[screen] || "Dashboard"}</div>
+          </div>
+          <div className="topbar-right">
+            <div className="search-bar" style={{width:220, display:window.innerWidth<640?"none":"flex"}}><Icon name="search"/><input placeholder="Search..."/></div>
+            <button className="icon-btn" onClick={()=>nav("notifications")}><Icon name="bell"/><span className="dot"/></button>
+            <button className="icon-btn" onClick={()=>{setPhase("login");}}><Icon name="logout"/></button>
+          </div>
+        </div>
+        <div className="content">{body}</div>
+      </div>
+      <div className="bottom-nav">
+        {mobileNavItems.map(it=>(
+          <button key={it.key} className={screen===it.key?"active":""} onClick={()=>nav(it.key)}><Icon name={it.icon} className="nav-ic"/>{it.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

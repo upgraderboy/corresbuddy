@@ -1,0 +1,282 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  STUDENT
+  SENIOR
+  ALUMNI
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  PENDING_VERIFICATION
+  SUSPENDED
+}
+
+enum BatchStatus {
+  ACTIVE
+  ALUMNI
+}
+
+enum AssignmentType {
+  SAME_ROLL
+  FALLBACK_TOP_PERFORMER
+}
+
+enum ContributionType {
+  RESOURCE
+  NOTE
+  ADVICE
+  TIMETABLE
+  STUDY_PLAN
+  ANSWER
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  passwordHash    String
+  name            String
+  role            Role        @default(STUDENT)
+  college         String      @default("VIT Vellore")
+  program         String      @default("MCA")
+  branch          String      @default("Computer Applications")
+  batchYear       Int?
+  rollNumber      Int?
+  profilePhoto    String?
+  bio             String?
+  headline        String?
+  status          UserStatus  @default(ACTIVE)
+  isTopPerformer  Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  assignmentsAsJunior CorresAssignment[] @relation("JuniorAssignments")
+  assignmentsAsSenior CorresAssignment[] @relation("SeniorAssignments")
+  resources           Resource[]
+  savedResources      SavedResource[]
+  questions           Question[]
+  answers             Answer[]
+  sentMessages        Message[]          @relation("SentMessages")
+  contributions       Contribution[]
+  streak              Streak?
+  notifications       Notification[]
+  deviceTokens        DeviceToken[]
+
+  @@index([batchYear, rollNumber])
+  @@index([role])
+}
+
+model Batch {
+  id        String      @id @default(uuid())
+  year      Int
+  program   String
+  branch    String
+  college   String      @default("VIT Vellore")
+  status    BatchStatus @default(ACTIVE)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([year, program, branch])
+}
+
+model CorresAssignment {
+  id              String         @id @default(uuid())
+  juniorId        String
+  junior          User           @relation("JuniorAssignments", fields: [juniorId], references: [id], onDelete: Cascade)
+  seniorId        String
+  senior          User           @relation("SeniorAssignments", fields: [seniorId], references: [id], onDelete: Cascade)
+  juniorBatchYear Int
+  seniorBatchYear Int
+  type            AssignmentType
+  reason          String?
+  status          String         @default("ACTIVE")
+  assignedAt      DateTime       @default(now())
+
+  @@index([juniorId])
+  @@index([seniorId])
+  @@index([juniorBatchYear, seniorBatchYear])
+}
+
+model GenerationalHistory {
+  id          String   @id @default(uuid())
+  rollNumber  Int
+  program     String
+  branch      String
+  college     String   @default("VIT Vellore")
+  rootUserId  String?
+  chain       Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([rollNumber, program, branch])
+}
+
+model Resource {
+  id             String          @id @default(uuid())
+  title          String
+  description    String?
+  category       String
+  subject        String
+  tags           String[]
+  fileUrl        String?
+  s3Key          String?
+  fileType       String          @default("pdf")
+  fileSize       Int?
+  contributorId  String
+  contributor    User            @relation(fields: [contributorId], references: [id], onDelete: Cascade)
+  batchYear      Int
+  downloadsCount Int             @default(0)
+  isReported     Boolean         @default(false)
+  isApproved     Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  savedBy        SavedResource[]
+
+  @@index([category])
+  @@index([subject])
+  @@index([batchYear])
+  @@index([contributorId])
+}
+
+model SavedResource {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  savedAt    DateTime @default(now())
+
+  @@unique([userId, resourceId])
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  subject     String
+  askerId     String
+  asker       User     @relation(fields: [askerId], references: [id], onDelete: Cascade)
+  isAnswered  Boolean  @default(false)
+  isReported  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  answers     Answer[]
+
+  @@index([subject])
+  @@index([askerId])
+}
+
+model Answer {
+  id         String   @id @default(uuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content    String
+  isAccepted Boolean  @default(false)
+  isReported Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([questionId])
+  @@index([authorId])
+}
+
+model Conversation {
+  id             String    @id @default(uuid())
+  participant1Id String
+  participant2Id String
+  lastMessageAt  DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  messages       Message[]
+
+  @@unique([participant1Id, participant2Id])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  content        String
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model Contribution {
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        ContributionType
+  referenceId String?
+  title       String
+  batchYear   Int
+  createdAt   DateTime         @default(now())
+
+  @@index([userId])
+  @@index([batchYear])
+  @@index([type])
+}
+
+model Streak {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak        Int       @default(0)
+  longestStreak        Int       @default(0)
+  lastContributionDate DateTime?
+  thisMonthCount       Int       @default(0)
+  updatedAt            DateTime  @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  recipientId String
+  recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  type        String
+  title       String
+  message     String
+  data        Json?
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([recipientId])
+}
+
+model DeviceToken {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  deviceType String   @default("WEB")
+  createdAt  DateTime @default(now())
+}
+
+model ModerationReport {
+  id           String   @id @default(uuid())
+  type         String
+  targetId     String
+  title        String
+  reporterName String
+  reason       String?
+  status       String   @default("PENDING")
+  createdAt    DateTime @default(now())
+}
+
